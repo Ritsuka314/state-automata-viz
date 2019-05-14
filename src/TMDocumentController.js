@@ -32,6 +32,13 @@ var UndoManager = ace.require('ace/undomanager').UndoManager;
 function TMDocumentController(containers, buttons, document) {
   this.simulator = new TMSimulator(containers.simulator, buttons.simulator);
 
+  if (!containers.editor) {
+    var diagramSource = document;
+  
+    this.simulator.sourceCode = diagramSource;
+    return;
+  }
+  
   // Set up ace editor //
   var editor = ace.edit(containers.editor);
   editor.session.setOptions({

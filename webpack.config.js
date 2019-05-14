@@ -41,6 +41,7 @@ const srcRoot = './src/';
 const commonConfig = {
   entry: {
     TMViz: [srcRoot + 'TMViz.js'],
+    embedded: srcRoot + "embedded.js",
     main: srcRoot + 'main.js'
   },
   output: {
