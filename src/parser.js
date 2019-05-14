@@ -78,9 +78,6 @@ function parseSpec(str) {
     throw new TMSpecError('No blank symbol was specified', detailsForBlank);
   }
   obj.blank = String(obj.blank);
-  if (obj.blank.length !== 1) {
-    throw new TMSpecError('The blank symbol must be a string of length 1', detailsForBlank);
-  }
   obj.startState = obj['start state'];
   delete obj['start state'];
   if (obj.startState == null) {
@@ -248,11 +245,7 @@ function parseInstructionObject(val) {
   // write key is optional, but must contain a char value if present
   if ('write' in val) {
     var writeStr = String(val.write);
-    if (writeStr.length === 1) {
-      symbol = writeStr;
-    } else {
-      throw new TMSpecError('Write requires a string of length 1');
-    }
+    symbol = writeStr;
   }
   return makeInstruction(symbol, move, state);
 }
