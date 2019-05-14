@@ -308,6 +308,7 @@ TMDocumentController.prototype.loadEditorSource = function () {
       // this.__loadedEditorSelection = this.editor.session.selection.toJSON();
       return [];
     } catch (e) {
+      console.error(e);
       return [e];
     }
   }.call(this));
