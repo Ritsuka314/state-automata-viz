@@ -58,8 +58,22 @@ Object.defineProperty(TMSpecError.prototype, 'message', {
   enumerable: true
 });
 
-// type TransitionTable = {[key: string]: ?{[key: string]: string} }
-// type TMSpec = {blank: string, start state: string, table: TransitionTable}
+var automaton_type;
+// forward declaration
+var parseInstructionObject;
+
+/*
+type TransitionTable = {
+  [key: string]: ?{[key: string]: string}
+}
+
+type TMSpec = {
+  blank: string,
+  type: "fsa" | "turing"
+  start state: string | [string],
+  table: TransitionTable
+}
+*/
 
 // IDEA: check with flow (flowtype.org)
 // throws YAMLException on YAML syntax error
@@ -72,10 +86,12 @@ function parseSpec(str) {
   if (obj == null) { throw new TMSpecError('The document is empty',
     {info: 'Every Turing machine requires a <code>blank</code> tape symbol,' +
     ' a <code>start state</code>, and a transition <code>table</code>'}); }
-  var detailsForBlank = {suggestion:
-    'Examples: <code>blank: \' \'</code>, <code>blank: \'0\'</code>'};
-  if (obj.blank == null) {
-    throw new TMSpecError('No blank symbol was specified', detailsForBlank);
+  function ensureBlankDefined() {
+    var detailsForBlank = {suggestion:
+      'Examples: <code>blank: \' \'</code>, <code>blank: \'0\'</code>'};
+    if (obj.blank == null) {
+      throw new TMSpecError('No blank symbol was specified', detailsForBlank);
+    }
   }
   obj.blank = String(obj.blank);
   obj.startState = obj['start state'];
@@ -84,7 +100,32 @@ function parseSpec(str) {
     throw new TMSpecError('No start state was specified',
     {suggestion: 'Assign one using <code>start state: </code>'});
   }
-  obj.startState = String(obj.startState);
+  // backward compatibility
+  automaton_type = obj.type = obj.type || "turing" ;
+  if (obj.type === "fsa") {
+    obj.allowN = true;
+    obj.startState = _.flatMapDeep([obj.startState], (s) => String(s));
+    // make states their own synonyms
+    var states = _.keys(obj.table);
+    obj.synonyms = Object.assign(obj.synonyms || {},
+      _.zipObject(
+        states,
+        _.map(states, (s) => {return {state: [s]}})
+      ));
+    parseInstructionObject = parseInstructionObject_FSA;
+  }
+  else {
+      obj.startState = String(obj.startState);
+      if (obj.type === "turing") {
+        parseInstructionObject = parseInstructionObject_Tape;
+        ensureBlankDefined();
+      }
+      else {
+        throw new TMSpecError('Illegal automaton type',
+        {problemValue: obj.type,
+        info: 'Automaton has to be either <code>fsa</code>, <code>pda</code>, or <code>turing</code>'});
+      }
+  }
   // parse synonyms and transition table
   checkTableType(obj.table); // parseSynonyms assumes a table object
   var synonyms = parseSynonyms(obj.synonyms, obj.table);
@@ -161,18 +202,28 @@ function parseTable(synonyms, val) {
   });
 }
 
+// {states: [string]}
+function makeInstruction_FSA(states) {
+  return Object.freeze({state: states instanceof Array? states : [states]});
+}
+
 // omits null/undefined properties
 // (?string, direction, ?string) -> {symbol?: string, move: direction, state?: string}
-function makeInstruction(symbol, move, state) {
+function makeInstruction_Tape(symbol, move, state) {
   return Object.freeze(_.omitBy({symbol: symbol, move: move, state: state},
     function (x) { return x == null; }));
 }
 
 function checkTarget(table, instruct) {
-  if (instruct.state != null && !(instruct.state in table)) {
-    throw new TMSpecError('Undeclared state', {problemValue: instruct.state,
-    suggestion: 'Make sure to list all states in the transition table and define their transitions (if any)'});
-  }
+  if (automaton_type === "fsa")
+    if (!_.every(instruct.state, (s) => s in table))
+      throw new TMSpecError('Undeclared state', {problemValue: instruct.states,
+        suggestion: 'Make sure to list all states in the transition table and define their transitions (if any)'});
+  else if (automaton_type === "turing")
+    if (instruct.state != null && !(instruct.state in table)) {
+      throw new TMSpecError('Undeclared state', {problemValue: instruct.state,
+      suggestion: 'Make sure to list all states in the transition table and define their transitions (if any)'});
+    }
   return instruct;
 }
 
@@ -197,11 +248,12 @@ var moveRight = Object.freeze({move: TM.MoveHead.right});
 
 // case: direction or synonym
 function parseInstructionString(synonyms, val) {
-  if (val === 'L') {
-    return moveLeft;
-  } else if (val === 'R') {
-    return moveRight;
-  }
+  if (automaton_type === "turing")
+    if (val === 'L') {
+      return moveLeft;
+    } else if (val === 'R') {
+      return moveRight;
+    }
   // note: this order prevents overriding L/R in synonyms, as that would
   // allow inconsistent notation, e.g. 'R' and {R: ..} being different.
   if (synonyms && synonyms[val]) { return synonyms[val]; }
@@ -210,9 +262,32 @@ function parseInstructionString(synonyms, val) {
     info: 'An instruction can be a string if it\'s a synonym or a direction'});
 }
 
+/*
+type ActionObj =
+    {states: String}
+  | {states: [String]}
+*/
+function parseInstructionObject_FSA(val) {
+  if (val == null) { throw new TMSpecError('Missing instruction');}
+  else if (val instanceof Array) {
+    if (_.every(val, (item) => typeof item === "string"))
+      return makeInstruction_FSA(_.map(val, (item) => String(item)));
+    else
+      throw new TMSpecError("Unrecognized state transition", {problemValue: val});
+  }
+  else if (typeof val === "string") return makeInstruction_FSA([String(val)]);
+  else if (val instanceof Object &&
+           "state" in val &&
+           _.keys(val).length === 1) { return makeInstruction_FSA(val.state); }
+  else
+    throw new TMSpecError("Unrecognized state transition", {
+      problemValue: val
+    });
+}
+
 // type ActionObj = {write?: any, L: ?string} | {write?: any, R: ?string}
 // case: ActionObj
-function parseInstructionObject(val) {
+function parseInstructionObject_Tape(val) {
   var symbol, move, state;
   if (val == null) { throw new TMSpecError('Missing instruction'); }
   // prevent typos: check for unrecognized keys
@@ -247,7 +322,7 @@ function parseInstructionObject(val) {
     var writeStr = String(val.write);
     symbol = writeStr;
   }
-  return makeInstruction(symbol, move, state);
+  return makeInstruction_Tape(symbol, move, state);
 }
 
 exports.TMSpecError = TMSpecError;

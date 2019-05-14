@@ -25,6 +25,9 @@ var _ = require('lodash');
   type LayoutEdge = { source: Object, target: Object, labels: [string] }
  */
 
+// forward declaration
+var labelFor;
+
 /**
  * Use a transition table to derive the graph (vertices & edges) for a D3 diagram.
  * Edges with the same source and target are combined.
@@ -32,7 +35,11 @@ var _ = require('lodash');
  * e.g. symbol string '0,1,,,I' -> symbols [0,1,',','I'].
  */
 // TransitionTable -> DiagramGraph
-function deriveGraph(table) {
+function deriveGraph(table, type) {
+  if (type === "fsa")
+    labelFor = labelFor_FSA;
+  else if (type === "turing")
+    labelFor = labelFor_Tape;
   // We need two passes, since edges may point at vertices yet to be created.
   // 1. Create all the vertices.
   var graph = _.mapValues(table, function (transitions, state) {
@@ -72,16 +79,20 @@ function deriveGraph(table) {
           }
           return acc;
         }, []);
-        var target = instruct.state != null ? instruct.state : state;
-        var edge = edgeTo(target, labelFor(symbols, instruct));
+        
+        _.each(instruct.states || [instruct.state], (s) => {
+          var target = s != null ? s : state;
+          var edge = edgeTo(target, labelFor(symbols, instruct));
 
-        symbols.forEach(function (symbol) {
-          stateTransitions[symbol] = {
-            // Normalize for execution, but display the less-cluttered original.
-            instruction: normalize(state, symbol, instruct),
-            edge: edge
-          };
+          symbols.forEach(function (symbol) {
+            stateTransitions[symbol] = {
+              // Normalize for execution, but display the less-cluttered original.
+              instruction: normalize(state, symbol, instruct),
+              edge: edge
+            };
+          });
         });
+        
       });
 
       return stateTransitions;
@@ -98,7 +109,11 @@ function normalize(state, symbol, instruction) {
   return _.defaults({}, instruction, {state: state, symbol: symbol});
 }
 
-function labelFor(symbols, action) {
+function labelFor_FSA(symbols, action) {
+  return symbols.join(',');
+}
+
+function labelFor_Tape(symbols, action) {
   var rightSide = ((action.symbol == null) ? '' : (visibleSpace(String(action.symbol)) + ','))
     + String(action.move);
   return symbols.map(visibleSpace).join(',') + '→' + rightSide;
@@ -117,8 +132,8 @@ function visibleSpace(c) {
  * • Provides mapping of each state to its vertex and each transition to its edge.
  * @param {TransitionTable} table
  */
-function StateGraph(table) {
-  var derived = deriveGraph(table);
+function StateGraph(table, type) {
+  var derived = deriveGraph(table, type);
   Object.defineProperties(this, {
     __graph: { value: derived.graph },
     __edges: { value: derived.edges }

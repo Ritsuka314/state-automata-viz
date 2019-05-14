@@ -10,7 +10,9 @@
  */
 
 var TuringMachine = require('./TuringMachine').TuringMachine,
+    FSA = require('./FSA').FSA,
     TapeViz = require('./tape/TapeViz'),
+    BoundedTapeViz = require('./tape/BoundedTapeViz'),
     StateGraph = require('./state-diagram/StateGraph'),
     StateViz = require('./state-diagram/StateViz'),
     watchInit = require('./watch').watchInit,
@@ -26,9 +28,13 @@ function animatedTransition(graph, animationCallback) {
   return function (state, symbol) {
     var tuple = graph.getInstructionAndEdge(state, symbol);
     if (tuple == null) { return null; }
-
-    animationCallback(tuple.edge);
-    return tuple.instruction;
+    if (tuple instanceof Array) {
+      _.each(tuple, (t) => animationCallback(t.edge));
+      return _.map(tuple, (t) => t.instruction);
+    } else {
+      animationCallback(tuple.edge);
+      return tuple.instruction;
+    }
   };
 }
 
@@ -54,6 +60,11 @@ function pulseEdge(edge) {
       .style('stroke-width', null);
 }
 
+function addBoundedTape(div, spec) {
+  return new BoundedTapeViz(div.append('svg').attr('class', 'bounded-tape'), 9,
+    spec.input ? String(spec.input).split('') : []);
+}
+
 function addTape(div, spec) {
   return new TapeViz(div.append('svg').attr('class', 'tm-tape'), 9,
     spec.blank, spec.input ? String(spec.input).split('') : []);
@@ -68,7 +79,7 @@ function addTape(div, spec) {
  */
 function TMViz(div, spec, posTable) {
   div = d3.select(div);
-  var graph = new StateGraph(spec.table);
+  var graph = new StateGraph(spec.table, spec.type);
   this.stateviz = new StateViz(
     div,
     graph.getVertexMap(),
@@ -91,11 +102,19 @@ function TMViz(div, spec, posTable) {
     }
   }
 
-  this.machine = new TuringMachine(
-    animatedTransition(graph, animateAndContinue),
-    spec.startState,
-    addTape(div, spec)
-  );
+  if (spec.type === "fsa")
+    this.machine = new FSA(
+      animatedTransition(graph, animateAndContinue),
+      spec.startState,
+      addBoundedTape(div, spec)
+      //addTape(div, spec)
+    );
+  else if (spec.type === "turing")
+    this.machine = new TuringMachine(
+      animatedTransition(graph, animateAndContinue),
+      spec.startState,
+      addTape(div, spec)
+    );
   // intercept and animate when the state is set
   watchInit(this.machine, 'state', function (prop, oldstate, newstate) {
     d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false);
@@ -144,7 +163,10 @@ TMViz.prototype.reset = function () {
   this.isHalted = false;
   this.machine.state = this.__spec.startState;
   this.machine.tape.domNode.remove();
-  this.machine.tape = addTape(this.__parentDiv, this.__spec);
+  if (this.machine instanceof FSA)
+    this.machine.tape = addBoundedTape(this.__parentDiv, this.__spec);
+  else if (this.machine instanceof TuringMachine)
+    this.machine.tape = addTape(this.__parentDiv, this.__spec);
 };
 
 Object.defineProperty(TMViz.prototype, 'positionTable', {
