@@ -3,21 +3,15 @@
 'use strict';
 
 /* eslint-env browser */
-window.vizAutomaton = function (root) {
-  var TMDocumentController = require('./TMDocumentController'),
-      DocumentMenu = require('./DocumentMenu'),
-      examples = require('./examples'),
-      toDocFragment = require('./util').toDocFragment;
-  var ace = require('ace-builds/src-min-noconflict');
-  var $ = require('jquery'); // for Bootstrap modal dialog events
+window.vizAutomaton = function (root, doc) {
+  var TMDocumentController = require('./TMDocumentController');
 
   // load up front so going offline doesn't break anything
   // (for snippet placeholders, used by "New blank document")
-  ace.config.loadModule('ace/ext/language_tools');
   
-  var doc = root.innerHTML;
+  doc = doc || root.textContent;
   root.innerHTML = `
-  <!-- Diagram -->
+      <!-- Diagram -->
       <div class="form-group machine-container">
         <!-- Noscript notice -->
         <noscript>

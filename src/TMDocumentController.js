@@ -2,11 +2,12 @@
 var TMSimulator = require('./TMSimulator'),
     parser = require('./parser'),
     util = require('./util'),
-    ace = require('ace-builds/src-min-noconflict'),
     d3 = require('d3');
 var TMSpecError = parser.TMSpecError;
 var YAMLException = parser.YAMLException;
-var UndoManager = ace.require('ace/undomanager').UndoManager;
+
+var ace;
+var UndoManager;
 
 /**
  * For editing and displaying a TMDocument.
@@ -32,12 +33,16 @@ var UndoManager = ace.require('ace/undomanager').UndoManager;
 function TMDocumentController(containers, buttons, document) {
   this.simulator = new TMSimulator(containers.simulator, buttons.simulator);
 
+  // running in embedded mode
   if (!containers.editor) {
     var diagramSource = document;
   
     this.simulator.sourceCode = diagramSource;
     return;
   }
+  
+  ace = require('ace-builds/src-min-noconflict')
+  UndoManager = ace.require('ace/undomanager').UndoManager;
   
   // Set up ace editor //
   var editor = ace.edit(containers.editor);
