@@ -86,6 +86,7 @@ function parseSpec(str) {
   if (obj == null) { throw new TMSpecError('The document is empty',
     {info: 'Every Turing machine requires a <code>blank</code> tape symbol,' +
     ' a <code>start state</code>, and a transition <code>table</code>'}); }
+    
   function ensureBlankDefined() {
     var detailsForBlank = {suggestion:
       'Examples: <code>blank: \' \'</code>, <code>blank: \'0\'</code>'};
@@ -93,17 +94,21 @@ function parseSpec(str) {
       throw new TMSpecError('No blank symbol was specified', detailsForBlank);
     }
   }
-  obj.blank = String(obj.blank);
+  
   obj.startState = obj['start state'];
   delete obj['start state'];
   if (obj.startState == null) {
     throw new TMSpecError('No start state was specified',
     {suggestion: 'Assign one using <code>start state: </code>'});
   }
+  
   // backward compatibility
+  // when not specified, assume turing machine
   automaton_type = obj.type = obj.type || "turing" ;
+  
   if (obj.type === "fsa") {
     obj.allowN = true;
+    // FSA may have multiple start states
     obj.startState = _.flatMapDeep([obj.startState], (s) => String(s));
     // make states their own synonyms
     var states = _.keys(obj.table);
@@ -115,17 +120,23 @@ function parseSpec(str) {
     parseInstructionObject = parseInstructionObject_FSA;
   }
   else {
-      obj.startState = String(obj.startState);
-      if (obj.type === "turing") {
-        parseInstructionObject = parseInstructionObject_Tape;
-        ensureBlankDefined();
-      }
-      else {
-        throw new TMSpecError('Illegal automaton type',
-        {problemValue: obj.type,
-        info: 'Automaton has to be either <code>fsa</code>, <code>pda</code>, or <code>turing</code>'});
-      }
+    // pda, lba, turing can have only one start state
+    obj.startState = String(obj.startState);
+    if (obj.type === "turing") {
+      parseInstructionObject = parseInstructionObject_Tape;
+      ensureBlankDefined();
+      obj.blank = String(obj.blank);
+    }
+    else {
+      throw new TMSpecError('Illegal automaton type',
+      {problemValue: obj.type,
+      info: 'Automaton has to be either <code>fsa</code>, <code>pda</code>, or <code>turing</code>'});
+    }
   }
+  
+  obj.acceptStates = obj["accept states"] || obj["accept state"];
+  if (typeof obj.acceptStates === "string") obj.acceptStates = [obj.acceptStates];
+  
   // parse synonyms and transition table
   checkTableType(obj.table); // parseSynonyms assumes a table object
   var synonyms = parseSynonyms(obj.synonyms, obj.table);
