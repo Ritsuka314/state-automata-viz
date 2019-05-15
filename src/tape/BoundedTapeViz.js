@@ -13,6 +13,8 @@ function initTapeCells(selection) {
       // the box outline is purely visual, so remove its data binding
       .attr('hidden', (d) => {
         return d == null ? "hidden" : null })
+      .style('opacity', (d) => {
+        return d == null ? 0 : null })
       .datum(null)
       .attr({'width': cellWidth,
              'height': cellHeight});
