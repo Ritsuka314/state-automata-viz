@@ -12,7 +12,7 @@
 }
 
 .current-state {
-  stroke: gold;
+  stroke: gold !important;
   stroke-width: 5px;
 }
 
@@ -33,7 +33,7 @@ text {
   letter-spacing: 0.2em;
 }
 
-.edgepath {
+.start-pointer, .edgepath {
   stroke: #ccc;
   fill: none;
   pointer-events: none;

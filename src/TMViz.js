@@ -83,7 +83,9 @@ function TMViz(div, spec, posTable) {
   this.stateviz = new StateViz(
     div,
     graph.getVertexMap(),
-    graph.getEdges()
+    graph.getEdges(),
+    spec.startState,
+    spec.acceptStates
   );
   if (posTable != undefined) { this.positionTable = posTable; }
 

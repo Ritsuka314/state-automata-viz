@@ -190,7 +190,7 @@ require('./StateViz.css');
  *   Passing an array will key the state nodes by array index.
  * @param  {[LayoutEdge]}     linkArray     Parameter to D3's force.links.
  */
-function StateViz(container, nodes, linkArray) {
+function StateViz(container, nodes, linkArray, startStates, acceptStates) {
   /* References:
     [Sticky Force Layout](http://bl.ocks.org/mbostock/3750558) demonstrates
     drag to position and double-click to release.
@@ -212,7 +212,8 @@ function StateViz(container, nodes, linkArray) {
     'viewBox': [0, 0, w, h].join(' '),
     'version': '1.1',
     ':xmlns': 'http://www.w3.org/2000/svg',
-    ':xmlns:xlink': 'http://www.w3.org/1999/xlink'
+    ':xmlns:xlink': 'http://www.w3.org/1999/xlink',
+    'style' : 'background: white'
   });
 
   // Force Layout
@@ -336,10 +337,41 @@ function StateViz(container, nodes, linkArray) {
     .append('circle')
       .attr('class', 'node')
       .attr('r', nodeRadius)
+      .style('stroke', 'black')
       .style('fill', function (d,i) { return colors(i); })
+      //.style('fill', 'none')
       .each(function (d) { d.domNode = this; })
       .on('dblclick', releasenode)
       .call(drag);
+      
+  var acceptcircles = nodeSelection
+    .append('circle')
+      .attr('class', 'accept node')
+      .attr('hidden', (d) => {
+        for (var i in acceptStates) {
+          if (acceptStates[i] === d.label)
+            return null;
+        }
+        return 'hidden';
+      })
+      .attr('r', nodeRadius*0.7)
+      .style('fill', 'none')
+      .style('stroke', 'black')
+      .on('dblclick', releasenode)
+      .call(drag);
+      
+  var startStatePointers = nodeSelection
+    .append('path')
+      .attr('class', 'start-pointer')
+      .attr('hidden', (d) => {
+        for (var i in startStates) {
+          if (startStates[i] === d.label)
+            return null;
+        }
+        return 'hidden';
+      })
+      .each(function (d) {d.startPointer = this});
+      
 
   var nodelabels = nodeSelection
    .append('text')
@@ -381,6 +413,9 @@ function StateViz(container, nodes, linkArray) {
     '.edgepath.active-edge.reversed-arc {' +
     '  marker-start: url(#reversed-active-arrowhead);' +
     '  marker-end: none;' +
+    '}' +
+    '.start-pointer {' +
+    '  marker-end: url(#arrowhead)' +
     '}';
   svg.append('style').each(function () {
     if (this.styleSheet) {
@@ -395,6 +430,13 @@ function StateViz(container, nodes, linkArray) {
     // Keep coordinates in bounds. http://bl.ocks.org/mbostock/1129492
     // NB. Bounding can cause node centers to coincide, especially at corners.
     nodecircles.attr({cx: function (d) { return d.x = limitRange(nodeRadius, w - nodeRadius, d.x); },
+                      cy: function (d) { return d.y = limitRange(nodeRadius, h - nodeRadius, d.y); }
+    })
+    .each((d) => 
+      d3.select(d.startPointer).attr('d', 
+        'M ' + (d.x-60) + ' ' + (d.y) +
+        ' L ' + (d.x-20) + ' ' + (d.y)));
+    acceptcircles.attr({cx: function (d) { return d.x = limitRange(nodeRadius, w - nodeRadius*0.8, d.x); },
                       cy: function (d) { return d.y = limitRange(nodeRadius, h - nodeRadius, d.y); }
     });
 
