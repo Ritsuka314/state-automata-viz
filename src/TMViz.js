@@ -119,8 +119,20 @@ function TMViz(div, spec, posTable) {
     );
   // intercept and animate when the state is set
   watchInit(this.machine, 'state', function (prop, oldstate, newstate) {
-    d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false);
-    d3.select(graph.getVertex(newstate).domNode).classed('current-state', true);
+    if (oldstate instanceof Array)
+      _.each((oldstate) =>
+        d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false),
+        oldstate);
+    else
+      d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false);
+    
+    if (newstate instanceof Array)
+      _.each((newstate) =>
+        d3.select(graph.getVertex(newstate).domNode).classed('current-state', true),
+        newstate);
+    else
+      d3.select(graph.getVertex(newstate).domNode).classed('current-state', true);
+    
     return newstate;
   });
 

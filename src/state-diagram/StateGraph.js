@@ -80,7 +80,7 @@ function deriveGraph(table, type) {
           return acc;
         }, []);
         
-        _.each(instruct.states || [instruct.state], (s) => {
+        _.each(instruct.state, (s) => {
           var target = s != null ? s : state;
           var edge = edgeTo(target, labelFor(symbols, instruct));
 
