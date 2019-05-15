@@ -346,14 +346,14 @@ function StateViz(container, nodes, linkArray, startStates, acceptStates) {
       
   var acceptcircles = nodeSelection
     .append('circle')
-      .attr('class', 'accept node')
-      .attr('hidden', (d) => {
+      .filter((d) => {
         for (var i in acceptStates) {
           if (acceptStates[i] === d.label)
-            return null;
+            return true;
         }
-        return 'hidden';
+        return false;
       })
+      .attr('class', 'accept node')
       .attr('r', nodeRadius*0.7)
       .style('fill', 'none')
       .style('stroke', 'black')
@@ -362,14 +362,14 @@ function StateViz(container, nodes, linkArray, startStates, acceptStates) {
       
   var startStatePointers = nodeSelection
     .append('path')
-      .attr('class', 'start-pointer')
-      .attr('hidden', (d) => {
+      .filter((d) => {
         for (var i in startStates) {
           if (startStates[i] === d.label)
-            return null;
+            return true;
         }
-        return 'hidden';
+        return false;
       })
+      .attr('class', 'start-pointer')
       .each(function (d) {d.startPointer = this});
       
 
