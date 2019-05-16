@@ -27,14 +27,14 @@ FSA.prototype.toString = function () {
 
 FSA.prototype.epsilonSteps = function () {
   var eInstructs;
-  var pastStates = this.state;
-  var newStates = this.state;
+  var seenStates = this.state;
   while ((eInstructs = this.nextEpsilonInstruction).length) {
-    newStates = _.flatMap(eInstructs, (instruct) => instruct.state)
-    pastStates = _.union(pastStates, newStates);
+    var newStates = _.difference(_.flatMap(eInstructs, (instruct) => instruct.state),
+                                 seenStates);
+    seenStates = _.union(seenStates, newStates);
     this.state = newStates;
   }
-  this.state = pastStates;
+  this.state = seenStates;
 }
 
 /**
