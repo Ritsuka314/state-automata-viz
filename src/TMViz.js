@@ -68,12 +68,12 @@ function pulseEdge(edge) {
 
 function addBoundedTape(div, spec) {
   return new BoundedTapeViz(div.append('svg').attr('class', 'bounded-tape'), 9,
-    spec.input ? String(spec.input).split('') : []);
+    spec.input);
 }
 
 function addTape(div, spec) {
   return new TapeViz(div.append('svg').attr('class', 'tm-tape'), 9,
-    spec.blank, spec.input ? String(spec.input).split('') : []);
+    spec.blank, spec.input);
 }
 
 /**
