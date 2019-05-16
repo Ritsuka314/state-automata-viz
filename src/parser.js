@@ -102,6 +102,20 @@ function parseSpec(str) {
     {suggestion: 'Assign one using <code>start state: </code>'});
   }
   
+  obj.input = (function(s) {
+    if (_.isNil(s))
+      return [];
+    else if (s instanceof Array)
+      return s
+    else if (typeof s === "string" || s instanceof String)
+      return s.split("");
+    else
+      throw new TMSpec("Unrecognized input format", {
+        problemValue: s,
+        info: "Automaton input can either be a string or an array."
+      })
+  })(obj.input);
+  
   // backward compatibility
   // when not specified, assume turing machine
   automaton_type = obj.type = obj.type || "turing" ;
