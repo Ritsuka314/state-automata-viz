@@ -1,3 +1,8 @@
+Forked from [this repository](https://github.com/aepsilon/turing-machine-viz), [this commit](https://github.com/aepsilon/turing-machine-viz/blob/b20bb7)
+
+[Required by upstream](https://github.com/aepsilon/turing-machine-viz/blob/b20bb7cd176ff16a119e1a634f46fabbfef52e1c/package.json#L6), this is as well licenced under BSD-3-Clause.
+
+
 # [turingmachine.io](http://turingmachine.io)
 
 This is a [Turing machine] visualizer designed for learning through visual thinking and creative exploration.
