@@ -82,6 +82,10 @@ const commonConfig = {
         }
       }
     ]
+  },
+  devtool:'cheap-module-source-map',//debug时可以查找到相应js 而不是打包后的js
+  devServer: {
+    historyApiFallback: true,//允许热更新时 解决history路径的刷新失败
   }
 };
 
