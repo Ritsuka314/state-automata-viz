@@ -85,11 +85,18 @@ function deriveGraph(table, type) {
           var edge = edgeTo(target, labelFor(symbols, instruct));
 
           symbols.forEach(function (symbol) {
-            stateTransitions[symbol] = {
-              // Normalize for execution, but display the less-cluttered original.
-              instruction: normalize(state, symbol, instruct),
-              edge: edge
-            };
+            stateTransitions[symbol] = _.mergeWith(
+              stateTransitions[symbol],
+              {
+                // Normalize for execution, but display the less-cluttered original.
+                instruction: normalize(state, symbol, instruct),
+                edge: edge  
+              },
+              (obj, src) => _.isEqual(obj, src) ? obj :
+                            _.isNil(obj) ? src :
+                            _.isArray(obj) ? obj.concat(src) :
+                            [obj].concat(src)
+            )
           });
         });
         

@@ -16,7 +16,8 @@ var TuringMachine = require('./TuringMachine').TuringMachine,
     StateGraph = require('./state-diagram/StateGraph'),
     StateViz = require('./state-diagram/StateViz'),
     watchInit = require('./watch').watchInit,
-    d3 = require('d3');
+    d3 = require('d3'),
+    _ = require('lodash/fp');
 
 /**
  * Create an animated transition function.
@@ -28,11 +29,16 @@ function animatedTransition(graph, animationCallback) {
   return function (state, symbol) {
     var tuple = graph.getInstructionAndEdge(state, symbol);
     if (tuple == null) { return null; }
-    if (tuple instanceof Array) {
-      _.each(tuple, (t) => animationCallback(t.edge));
-      return _.map(tuple, (t) => t.instruction);
-    } else {
-      animationCallback(tuple.edge);
+    //else if (tuple instanceof Array) {
+    //  _.each(tuple, (t) => animationCallback(t.edge));
+    //  return _.map(tuple, (t) => t.instruction);
+    //}
+    else {
+      if (tuple.edge instanceof Array)
+        _.each((edge) => animationCallback(edge))
+              (tuple.edge);
+      else
+        animationCallback(tuple.edge);
       return tuple.instruction;
     }
   };
