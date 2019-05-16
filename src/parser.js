@@ -107,7 +107,6 @@ function parseSpec(str) {
   automaton_type = obj.type = obj.type || "turing" ;
   
   if (obj.type === "fsa") {
-    obj.allowN = true;
     // FSA may have multiple start states
     obj.startState = _.flatMapDeep([obj.startState], (s) => String(s));
     // make states their own synonyms
@@ -136,6 +135,7 @@ function parseSpec(str) {
   
   obj.acceptStates = obj["accept states"] || obj["accept state"];
   if (typeof obj.acceptStates === "string") obj.acceptStates = [obj.acceptStates];
+  delete obj["accept states"], obj["accept state"];
   
   // parse synonyms and transition table
   checkTableType(obj.table); // parseSynonyms assumes a table object
