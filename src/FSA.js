@@ -12,9 +12,12 @@ var _ = require('lodash');
  * @param {state} startState  The state to start in.
  * @param         tape        The tape to use.
  */
-function FSA(transition, startStates, tape) {
+function FSA(transition, startStates, acceptStates, epsilonTransition, tape) {
   this.transition = transition;
+  // we call this property "state" so it can be consistant with other models when watched
   this.state = startStates;
+  this.acceptStates = acceptStates;
+  this.epsilonTransition = epsilonTransition;
   this.tape = tape;
 }
 
@@ -22,17 +25,33 @@ FSA.prototype.toString = function () {
   return String(this.state) + '\n' + String(this.tape);
 };
 
+FSA.prototype.epsilonSteps = function () {
+  var eInstructs;
+  var pastStates = this.state;
+  var newStates = this.state;
+  while ((eInstructs = this.nextEpsilonInstruction).length) {
+    newStates = _.flatMap(eInstructs, (instruct) => instruct.state)
+    pastStates = _.union(pastStates, newStates);
+    this.state = newStates;
+  }
+  this.state = pastStates;
+}
+
 /**
  * Step to the next configuration according to the transition function.
  * @return {boolean} true if successful (the transition is defined),
  *   false otherwise (machine halted)
  */
 FSA.prototype.step = function () {
+  this.epsilonSteps();
+  
   var instructs = this.nextInstruction;
   if (instructs == null) { return false; }
   if (instructs.length == 0) { return false; }
   
   this.state = _.flatMap(instructs, (instruct) => instruct.state);
+  
+  this.epsilonSteps();
   
   try {
     move(this.tape, MoveHead.right);
@@ -52,6 +71,13 @@ Object.defineProperties(FSA.prototype, {
                       (x) => x);
     },
     enumerable: true
+  },
+  nextEpsilonInstruction: {
+    get: function() {
+      return _.filter(_.map(this.state,
+                            (s) => this.transition(s, this.epsilonTransition)),
+                      (x) => x);
+    }
   },
   isHalted: {
     get: function () { return this.nextInstruction.length == 0; },

@@ -99,13 +99,22 @@ function TMViz(div, spec, posTable) {
   this.stepInterval = 100;
 
   var self = this;
+  // lock: collection of edges
+  // only last edge taken in step can continue next step in running mode
+  var transitionsTaking = [];
   // We hook into the animation callback to know when to start the next step (when running).
   function animateAndContinue(edge) {
     var transition = self.edgeAnimation(edge);
     if (self.isRunning) {
+      // lock
+      transitionsTaking = _.union(transitionsTaking, [edge]);
+      
       transition.transition().duration(self.stepInterval).each('end', function () {
+        // unlock
+        transitionsTaking = _.without(transitionsTaking, [edge]);
+        
         // stop if machine was paused during the animation
-        if (self.isRunning) { self.step(); }
+        if (self.isRunning && transitionsTaking.length === 0) { self.step(); }
       });
     }
   }
@@ -114,6 +123,8 @@ function TMViz(div, spec, posTable) {
     this.machine = new FSA(
       animatedTransition(graph, animateAndContinue),
       spec.startState,
+      spec.acceptStates,
+      spec.epsilonTransition,
       addBoundedTape(div, spec)
       //addTape(div, spec)
     );

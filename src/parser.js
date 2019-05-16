@@ -151,6 +151,17 @@ function parseSpec(str) {
   if (typeof obj.acceptStates === "string") obj.acceptStates = [obj.acceptStates];
   delete obj["accept states"], obj["accept state"];
   
+  if ("epsilon transition" in obj) {
+    if (obj.type === "fsa") {
+      obj.epsilonTransition = obj["epsilon transition"];
+      delete obj["epsilon transition"];
+      if (_.some(obj.input, (x) => x === obj.epsilonTransition))
+        throw new TMSpecError("Input cannot contain epsilon");
+    } else
+      throw new TMSpecError("Automaton is nondeterministic",
+      {suggestion: "Only FSA can have epsilon transitions"});
+  }
+
   // parse synonyms and transition table
   checkTableType(obj.table); // parseSynonyms assumes a table object
   var synonyms = parseSynonyms(obj.synonyms, obj.table);
