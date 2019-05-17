@@ -198,6 +198,8 @@ function StateViz(container, nodes, linkArray, startStates, acceptStates) {
     [Graph with labeled edges](http://bl.ocks.org/jhb/5955887) demonstrates
     arrow edges with auto-rotated labels.
   */
+  
+  var containerId = container[0][0].parentNode.id || "";
 
   /* eslint-disable no-invalid-this */ // eslint is not familiar with D3
   var w = 800;
@@ -268,7 +270,7 @@ function StateViz(container, nodes, linkArray, startStates, acceptStates) {
     var edgepath = group
       .append('path')
         .attr({'class': 'edgepath',
-               'id': 'edgepath'+edgeIndex })
+               'id': containerId + '_edgepath'+edgeIndex })
         .each(function (d) { d.domNode = this; });
 
     var labels = group.selectAll('.edgelabel')
@@ -276,7 +278,7 @@ function StateViz(container, nodes, linkArray, startStates, acceptStates) {
       .append('text')
         .attr('class', 'edgelabel');
     labels.append('textPath')
-        .attr('xlink:href', function () { return '#edgepath'+edgeIndex; })
+        .attr('xlink:href', function () { return '#'+ containerId +'_edgepath'+edgeIndex; })
         .attr('startOffset', '50%')
         .text(identity);
     /* To reduce JS computation, label positioning varies by edge shape:
