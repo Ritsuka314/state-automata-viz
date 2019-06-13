@@ -5,34 +5,23 @@ var fromPairs = require('lodash/fp').fromPairs;
 
 
 function requireExample(name) {
-  return require('raw!./examples/' + name + '.yaml');
+  //return require('raw!./examples/' + name + '.yaml');
+  return context(name);
 }
 
-var examplePairs = [
-  'repeat01',
-  'binaryIncrement',
-  'divisibleBy3',
-  'copy1s',
-  'divisibleBy3Base10',
-  'matchThreeLengths',
-  'matchBinaryStrings',
-  'palindrome',
-  'busyBeaver3',
-  'busyBeaver4',
-  'powersOfTwo',
-  'lengthMult',
-  'binaryAdd',
-  'unaryMult',
-  'binaryMult'
-].map(function (id) {
-  // parse each string into a document
-  var doc = parseDocument(requireExample(id));
-  doc.id = id;
+var context = require.context('raw!./examples', false, /\.yaml$/);
 
-  return [id, doc];
+var examplePairs = context
+  .keys()
+  .filter((item) => item !== "./_template.yaml")
+  .map(function (id) {
+    // parse each string into a document
+    var doc = parseDocument(requireExample(id));
+    doc.id = id;
+
+    return [id, doc];
 });
 var examples = Object.freeze(fromPairs(examplePairs));
-
 
 function isExampleID(docID) {
   return {}.hasOwnProperty.call(examples, docID);
@@ -49,4 +38,4 @@ exports.hasID = isExampleID;
 exports.get = get;
 exports.list = list;
 exports.firsttimeDocID = 'binaryIncrement';
-exports.blankTemplate = requireExample('_template');
+exports.blankTemplate = require('raw!./examples/_template.yaml');

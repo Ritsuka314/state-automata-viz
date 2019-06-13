@@ -1,0 +1,11 @@
+name: FSA odd length
+source code: |
+  input: "aababaa"
+  start state: q0
+  type: fsa
+  table:
+    q0:
+      [a, b]: q1
+    q1:
+      [a, b]: q0
+positions:

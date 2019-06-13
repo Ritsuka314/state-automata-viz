@@ -1,0 +1,13 @@
+name: "PDA 0^i1^i"
+source code: |
+  input: "000111"
+  start state: A
+  accept states: [B]
+  type: pda
+  table:
+    A:
+      0: {push: i}
+      1: {pop: i, B}
+    B:
+      1: {pop: i}
+positions:
