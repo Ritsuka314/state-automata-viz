@@ -28,7 +28,7 @@ TuringMachine.prototype.step = function () {
   var instruct = this.nextInstruction;
   if (instruct == null) { return false; }
 
-  this.tape.write(instruct.symbol);
+  if (instruct.symbol) this.tape.write(instruct.symbol);
   move(this.tape, instruct.move);
   this.state = instruct.state;
 
@@ -49,8 +49,8 @@ Object.defineProperties(TuringMachine.prototype, {
 // Allows for both notational conventions of moving the head or moving the tape
 function move(tape, direction) {
   switch (direction) {
-    case MoveHead.right: tape.headRight(); break;
-    case MoveHead.left:  tape.headLeft();  break;
+    case 'R': tape.headRight(); break;
+    case 'L':  tape.headLeft();  break;
     default: throw new TypeError('not a valid tape movement: ' + String(direction));
   }
 }

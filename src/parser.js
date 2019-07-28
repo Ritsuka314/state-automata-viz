@@ -139,6 +139,11 @@ function parseSpec(str) {
       parseInstructionObject = parseInstructionObject_Tape;
       ensureBlankDefined();
       obj.blank = String(obj.blank);
+      // predefined synonyms
+      // overrides user defined to prevent inconsistent notation,
+      // e.g. 'R' and {R: ..} being different.
+      obj.synonyms['L'] = {move: 'L'};
+      obj.synonyms['R'] = {move: 'R'};
     }
     else {
       throw new TMSpecError('Illegal automaton type',
@@ -278,23 +283,15 @@ function parseInstruction(synonyms, table, val) {
   }());
 }
 
-var moveLeft = Object.freeze({move: TM.MoveHead.left});
-var moveRight = Object.freeze({move: TM.MoveHead.right});
-
-// case: direction or synonym
+// case: synonym
 function parseInstructionString(synonyms, val) {
-  if (automaton_type === "turing")
-    if (val === 'L') {
-      return moveLeft;
-    } else if (val === 'R') {
-      return moveRight;
-    }
-  // note: this order prevents overriding L/R in synonyms, as that would
-  // allow inconsistent notation, e.g. 'R' and {R: ..} being different.
-  if (synonyms && synonyms[val]) { return synonyms[val]; }
-  throw new TMSpecError('Unrecognized string',
-    {problemValue: val,
-    info: 'An instruction can be a string if it\'s a synonym or a direction'});
+  if (synonyms && synonyms[val]) {
+    return synonyms[val];
+  } else {
+    throw new TMSpecError('Unrecognized string',
+      {problemValue: val,
+      info: 'An instruction can be a string if it\'s a synonym or a direction'});
+  }
 }
 
 /*
@@ -320,43 +317,37 @@ function parseInstructionObject_FSA(val) {
     });
 }
 
-// type ActionObj = {write?: any, L: ?string} | {write?: any, R: ?string}
-// case: ActionObj
+// type val =
+//     {write?: any,
+//      L: ?string}
+//   | {write?: any,
+//      R: ?string}
 function parseInstructionObject_Tape(val) {
   var symbol, move, state;
   if (val == null) { throw new TMSpecError('Missing instruction'); }
-  // prevent typos: check for unrecognized keys
-  (function () {
-    var badKey;
-    if (!Object.keys(val).every(function (key) {
-      badKey = key;
-      return key === 'L' || key === 'R' || key === 'write';
-    })) {
-      throw new TMSpecError('Unrecognized key',
-      {problemValue: badKey,
-      info: 'An instruction always has a tape movement <code>L</code> or <code>R</code>, '
-        + 'and optionally can <code>write</code> a symbol'});
-    }
-  })();
-  // one L/R key is required, with optional state value
-  if ('L' in val && 'R' in val) {
+  
+  // one L/R key is required
+  // Head movement can be specified as one of the keys L/R,
+  // in which case state can be specified as its value
+  // (backward compatibility);
+  // or as the value of the key move
+  // in which case state can be specified as value of key state
+  if (('L' in val) + ('R' in val) + ('move' in val) > 1) {
     throw new TMSpecError('Conflicting tape movements',
-    {info: 'Each instruction needs exactly one movement direction, but two were found'});
+    {info: 'Each instruction needs exactly one movement direction, but more were found'});
   }
-  if ('L' in val) {
-    move = TM.MoveHead.left;
-    state = val.L;
-  } else if ('R' in val) {
-    move = TM.MoveHead.right;
-    state = val.R;
-  } else {
-    throw new TMSpecError('Missing movement direction');
-  }
-  // write key is optional, but must contain a char value if present
-  if ('write' in val) {
-    var writeStr = String(val.write);
-    symbol = writeStr;
-  }
+  
+  // normalize representation
+  move = val.move || ('L' in val ? 'L' : null) || ('R' in val ? 'R' : null);
+  if (move && !(move === 'L' || move === 'R'))
+    throw new TMSpecError('unrecognized movement direction',
+    {info: 'Move direction has to be one of <code>L</code>, <code>R</code>',
+     problemValue: val.move});
+    
+  state = _.compact(_.concat(val.state, val.L, val.R)).filter(String);
+
+  symbol = val.write ? String(val.write) : null;
+  
   return makeInstruction_Tape(symbol, move, state);
 }
 
