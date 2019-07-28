@@ -122,7 +122,6 @@ function parseSpec(str) {
   
   if (obj.type === "fsa") {
     // FSA may have multiple start states
-    obj.startState = _.flatMapDeep([obj.startState], (s) => String(s));
     // make states their own synonyms
     var states = _.keys(obj.table);
     obj.synonyms = Object.assign(obj.synonyms || {},
@@ -130,6 +129,7 @@ function parseSpec(str) {
         states,
         _.map(states, (s) => {return {state: [s]}})
       ));
+    obj.startState = _.castArray(obj.startState).map(String);
     parseInstructionObject = parseInstructionObject_FSA;
   }
   else {
@@ -147,8 +147,7 @@ function parseSpec(str) {
     }
   }
   
-  obj.acceptStates = obj["accept states"] || obj["accept state"];
-  if (typeof obj.acceptStates === "string") obj.acceptStates = [obj.acceptStates];
+  obj.acceptStates = _.castArray(obj["accept states"] || obj["accept state"]);
   delete obj["accept states"], obj["accept state"];
   
   if ("epsilon transition" in obj) {
@@ -240,7 +239,7 @@ function parseTable(synonyms, val) {
 
 // {states: [string]}
 function makeInstruction_FSA(states) {
-  return Object.freeze({state: states instanceof Array? states : [states]});
+  return Object.freeze({state: _.castArray(states).map(String)});
 }
 
 // omits null/undefined properties
