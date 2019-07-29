@@ -66,7 +66,7 @@ Object.defineProperties(FSA.prototype, {
   nextInstruction: {
     get: function () {
       //return this.transition(this.state, this.tape.read());
-      return _.filter(_.map(this.state,
+      return _.filter(_.flatMap(this.state,
                             (s) => this.transition(s, this.tape.read())),
                       (x) => x);
     },
