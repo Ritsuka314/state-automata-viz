@@ -95,12 +95,8 @@ function parseSpec(str) {
     }
   }
   
-  obj.startState = obj['start state'];
-  delete obj['start state'];
-  if (obj.startState == null) {
-    throw new TMSpecError('No start state was specified',
-    {suggestion: 'Assign one using <code>start state: </code>'});
-  }
+  obj.startStates = _.castArray(obj['start state'] || obj['start states']).map(String);
+  delete obj['start state'], obj['start states'];
   
   obj.input = (function(s) {
     if (_.isNil(s))
@@ -116,63 +112,70 @@ function parseSpec(str) {
       })
   })(obj.input);
   
-  // backward compatibility
-  // when not specified, assume turing machine
+  // for backward compatibility
+  // assume turing machine when not specified
   automaton_type = obj.type = obj.type || "turing" ;
+  obj.type = obj.type.toLowerCase();
   
-  if (obj.type === "fsa") {
-    // FSA may have multiple start states
-    // make states their own synonyms
-    var states = _.keys(obj.table);
-    obj.synonyms = Object.assign(obj.synonyms || {},
-      _.zipObject(
-        states,
-        _.map(states, (s) => {return {state: [s]}})
-      ));
-    obj.startState = _.castArray(obj.startState).map(String);
-    parseInstructionObject = parseInstructionObject_FSA;
-  }
-  else {
-    // pda, lba, turing can have only one start state
-    obj.startState = String(obj.startState);
-    if (obj.type === "turing") {
+  // make states their own synonyms
+  var states = _.keys(obj.table);
+  obj.synonyms = Object.assign(obj.synonyms || {},
+    _.zipObject(
+      states,
+      _.map(states, (s) => {return {state: [s]}})
+    )
+  );
+  
+  switch (obj.type) {
+    case "fsa":
+      parseInstructionObject = parseInstructionObject_FSA;
+      break;
+    case "turing":
       parseInstructionObject = parseInstructionObject_Tape;
-      ensureBlankDefined();
+
+      if (obj.blank == null) {
+        throw new TMSpecError('No blank symbol was specified',
+        {suggestion: 'Examples: <code>blank: \' \'</code>, <code>blank: \'0\'</code>'});
+      }    
       obj.blank = String(obj.blank);
+        
       // predefined synonyms
       // overrides user defined to prevent inconsistent notation,
       // e.g. 'R' and {R: ..} being different.
       obj.synonyms['L'] = {move: 'L'};
       obj.synonyms['R'] = {move: 'R'};
-    }
-    else {
+      break;
+    default:
       throw new TMSpecError('Illegal automaton type',
       {problemValue: obj.type,
-      info: 'Automaton has to be either <code>fsa</code>, <code>pda</code>, or <code>turing</code>'});
-    }
+       info: 'Automaton has to be either <code>fsa</code> or <code>turing</code>'});
   }
   
-  obj.acceptStates = _.castArray(obj["accept states"] || obj["accept state"]);
+  obj.acceptStates = _.castArray(obj["accept states"] || obj["accept state"]).map(String);
   delete obj["accept states"], obj["accept state"];
   
-  if ("epsilon transition" in obj) {
-    if (obj.type === "fsa") {
-      obj.epsilonTransition = obj["epsilon transition"];
-      delete obj["epsilon transition"];
-      if (_.some(obj.input, (x) => x === obj.epsilonTransition))
-        throw new TMSpecError("Input cannot contain epsilon");
-    } else
-      throw new TMSpecError("Automaton is nondeterministic",
-      {suggestion: "Only FSA can have epsilon transitions"});
+  if ("epsilon" in obj) {
+    switch (obj.type) {
+      case "fsa":
+      case "pda":
+        obj.epsilon = String(obj.epsilon);
+        if (_.some(obj.input, (x) => x === obj.epsilon))
+          throw new TMSpecError("Input cannot contain epsilon");
+        break;
+      default:
+        throw new TMSpecError("only fsa and pda can specify epsilon symbol");
   }
 
   // parse synonyms and transition table
   checkTableType(obj.table); // parseSynonyms assumes a table object
   var synonyms = parseSynonyms(obj.synonyms, obj.table);
   obj.table = parseTable(synonyms, obj.table);
+  
   // check for references to non-existent states
-  if (!(obj.startState in obj.table)) {
-    throw new TMSpecError('The start state has to be declared in the transition table');
+  var badStates = _.filter(obj.startStates, s => !(s in obj.table));
+  if (badStates.length) {
+    throw new TMSpecError('The start state has to be declared in the transition table',
+    {problemValue: badStates});
   }
 
   return obj;
