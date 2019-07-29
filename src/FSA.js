@@ -9,7 +9,7 @@ var _ = require('lodash');
  *   A transition function that, given *only* the current state and symbol,
  *   returns an object with the following properties: symbol, move, and state.
  *   Returning null/undefined halts the machine (no transition defined).
- * @param {state} startState  The state to start in.
+ * @param {state} startStates  The state to start in.
  * @param         tape        The tape to use.
  */
 function FSA(transition, startStates, acceptStates, epsilonTransition, tape) {

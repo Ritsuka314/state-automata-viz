@@ -38,6 +38,8 @@ var labelFor;
 function deriveGraph(table, type) {
   if (type === "fsa")
     labelFor = labelFor_FSA;
+  else if (type === "pda")
+    labelFor = labelFor_PDA;
   else if (type === "turing")
     labelFor = labelFor_Tape;
   // We need two passes, since edges may point at vertices yet to be created.
@@ -68,38 +70,38 @@ function deriveGraph(table, type) {
         return edge;
       }
       // Create symbol -> instruction object map
-      _.forEach(vertex.transitions, function (instruct, symbolKey) {
-        // Handle comma-separated symbols.
-        // Recreate array by splitting on ','. Treat 2 consecutive ',' as , ','.
-        var symbols = symbolKey.split(',').reduce(function (acc, x) {
-          if (x === '' && acc[acc.length-1] === '') {
-            acc[acc.length-1] = ',';
-          } else {
-            acc.push(x);
-          }
-          return acc;
-        }, []);
-        
-        _.each(instruct.state, (s) => {
-          var target = s != null ? s : state;
-          var edge = edgeTo(target, labelFor(symbols, instruct));
+      _.forEach(vertex.transitions, function (instructs, symbolKey) {
+        _.forEach(_.castArray(instructs), (instruct) => {
+          // Handle comma-separated symbols.
+          // Recreate array by splitting on ','. Treat 2 consecutive ',' as , ','.
+          var symbols = symbolKey.split(',').reduce(function (acc, x) {
+            if (x === '' && acc[acc.length-1] === '') {
+              acc[acc.length-1] = ',';
+            } else {
+              acc.push(x);
+            }
+            return acc;
+          }, []);
+          
+          _.each(instruct.state, (s) => {
+            var target = s != null ? s : state;
+            var edge = edgeTo(target, labelFor(symbols, instruct));
 
-          symbols.forEach(function (symbol) {
-            stateTransitions[symbol] = _.mergeWith(
-              stateTransitions[symbol],
-              {
-                // Normalize for execution, but display the less-cluttered original.
-                instruction: normalize(state, symbol, instruct),
-                edge: edge  
-              },
-              (obj, src) => _.isEqual(obj, src) ? obj :
-                            _.isNil(obj) ? src :
-                            _.isArray(obj) ? obj.concat(src) :
-                            [obj].concat(src)
-            )
+            symbols.forEach(function (symbol) {
+              stateTransitions[symbol] = _.mergeWith(
+                stateTransitions[symbol],
+                {
+                  instruction: instruct,
+                  edge: edge  
+                },
+                (obj, src) => //_.isEqual(obj, src) ? obj :
+                              _.isNil(obj) ? [src] :
+                              _.isArray(obj) ? obj.concat(src) :
+                              [obj].concat(src)
+              )
+            });
           });
         });
-        
       });
 
       return stateTransitions;
@@ -110,18 +112,16 @@ function deriveGraph(table, type) {
   return {graph: graph, edges: allEdges};
 }
 
-// Normalize an instruction to include an explicit state and symbol.
-// e.g. {symbol: '1'} normalizes to {state: 'q0', symbol: '1'} when in state q0.
-function normalize(state, symbol, instruction) {
-  return _.defaults({}, instruction, {state: state, symbol: symbol});
-}
-
 function labelFor_FSA(symbols, action) {
   return symbols.join(',');
 }
 
-function labelFor_Tape(symbols, action) {
-  var rightSide = ((action.symbol == null) ? '' : (visibleSpace(String(action.symbol)) + ','))
+function labelFor_PDA(symbols, action) {
+  return symbols.join(',') + ', ' + action.pop.join() + '↦' + action.push.join();
+}
+
+function labelFor_Tape(symbols, action) {  
+  var rightSide = ((action.symbol == null) ? '' : (visibleSpace(String(action.symbol)))) + ','
     + String(action.move);
   return symbols.map(visibleSpace).join(',') + '→' + rightSide;
 }

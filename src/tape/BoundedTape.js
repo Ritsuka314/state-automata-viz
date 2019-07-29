@@ -1,5 +1,6 @@
 'use strict';
-var _ = require('lodash/fp');
+var _ = require('lodash/fp'),
+    TMRuntimeError = require("./TMRuntimeError");
 
 // Bounded tape
 function BoundedTape(input) {
@@ -34,16 +35,6 @@ BoundedTape.prototype.write = function (symbol) {
   else
     tape.content[tape.head] = symbol;
 };
-
-function TMRuntimeError(reason, details) {
-  this.name = 'TMRuntimeError';
-  this.stack = (new Error()).stack;
-
-  this.reason = reason;
-  this.details = details || {};
-}
-TMRuntimeError.prototype = Object.create(Error.prototype);
-TMRuntimeError.prototype.constructor = TMRuntimeError;
 
 BoundedTape.prototype.headRight = function () {
   var tape = this.tape;

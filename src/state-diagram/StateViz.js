@@ -362,7 +362,7 @@ function StateViz(container, nodes, linkArray, startStates, acceptStates) {
       .on('dblclick', releasenode)
       .call(drag);
       
-  var startStatePointers = nodeSelection
+  var startStatesPointers = nodeSelection
     .append('path')
       .filter((d) => {
         for (var i in startStates) {

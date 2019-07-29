@@ -1,6 +1,7 @@
 'use strict';
 
-var TMRuntimeError = require("./tape/TMRuntimeError");
+var _ = require('lodash');
+
 /**
  * Construct a Turing machine.
  * @param {(state, symbol) -> ?{state: state, symbol: symbol, move: direction}}
@@ -11,44 +12,60 @@ var TMRuntimeError = require("./tape/TMRuntimeError");
  * @param {state} startStates  The state to start in.
  * @param         tape        The tape to use.
  */
-function TuringMachine(transition, startStates, tape) {
+function PDA(transition, startStates, acceptStates, tape, stack) {
   this.transition = transition;
   this.state = startStates;
+  this.acceptStates = acceptStates;
   this.tape = tape;
+  this.stack = stack;
 }
 
-TuringMachine.prototype.toString = function () {
+PDA.prototype.toString = function () {
   return String(this.state) + '\n' + String(this.tape);
 };
+
+PDA.prototype.onStack = function(s) {
+  return _.isEqual(_.takeRight(this.stack, s.length), s);
+}
 
 /**
  * Step to the next configuration according to the transition function.
  * @return {boolean} true if successful (the transition is defined),
  *   false otherwise (machine halted)
  */
-TuringMachine.prototype.step = function () {
-  var instruct = this.nextInstruction;
-  if (instruct == null) { return false; }
-  if (instruct.length == 0) { return false; }
-  if (instruct.length > 1) {
-    throw TMRuntimeError("Cannot simulate nondeterministic TM");
-  }
-  instruct = instruct[0];
+PDA.prototype.step = function () {
+  var instructs = this.nextInstruction;
+  if (instructs == null) { return false; }
+  if (instructs.length == 0) { return false; }
 
-  if (instruct.symbol) this.tape.write(instruct.symbol);
-  move(this.tape, instruct.move);
-  this.state = instruct.state;
-
-  return true;
+  var idx;
+  for (idx in instructs ){
+    var instruct = instructs[idx];
+    if (this.stack.isOn(instruct.pop)) {
+      this.stack.pop(instruct.pop.length);
+      this.stack.push(instruct.push);      
+      this.state = instruct.state;
+      try {
+        move(this.tape, MoveHead.right);
+      } catch (e) {
+        return false;
+      }
+      return true;
+    }
+  };
+  
+  return false;
 };
 
-Object.defineProperties(TuringMachine.prototype, {
+Object.defineProperties(PDA.prototype, {
   nextInstruction: {
-    get: function () { return this.transition(this.state, this.tape.read()); },
+    get: function () {
+      return this.transition(this.state, this.tape.read());
+    },
     enumerable: true
   },
   isHalted: {
-    get: function () { return this.nextInstruction == null; },
+    get: function () { return this.nextInstruction.length == 0; },
     enumerable: true
   }
 });
@@ -56,8 +73,8 @@ Object.defineProperties(TuringMachine.prototype, {
 // Allows for both notational conventions of moving the head or moving the tape
 function move(tape, direction) {
   switch (direction) {
-    case 'R': tape.headRight(); break;
-    case 'L':  tape.headLeft();  break;
+    case MoveHead.right: tape.headRight(); break;
+    case MoveHead.left:  tape.headLeft();  break;
     default: throw new TypeError('not a valid tape movement: ' + String(direction));
   }
 }
@@ -69,4 +86,4 @@ var MoveTape = Object.freeze({left: MoveHead.right, right: MoveHead.left});
 
 exports.MoveHead = MoveHead;
 exports.MoveTape = MoveTape;
-exports.TuringMachine = TuringMachine;
+exports.PDA = PDA;

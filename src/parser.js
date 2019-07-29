@@ -69,7 +69,7 @@ type TransitionTable = {
 
 type TMSpec = {
   blank: string,
-  type: "fsa" | "turing"
+  type: "fsa" | "pda" | "turing"
   start state: string | [string],
   table: TransitionTable
 }
@@ -130,6 +130,9 @@ function parseSpec(str) {
     case "fsa":
       parseInstructionObject = parseInstructionObject_FSA;
       break;
+    case "pda":
+      parseInstructionObject = parseInstructionObject_PDA;
+      break;
     case "turing":
       parseInstructionObject = parseInstructionObject_Tape;
 
@@ -148,7 +151,7 @@ function parseSpec(str) {
     default:
       throw new TMSpecError('Illegal automaton type',
       {problemValue: obj.type,
-       info: 'Automaton has to be either <code>fsa</code> or <code>turing</code>'});
+       info: 'Automaton has to be either <code>fsa</code>, <code>pda</code>, or <code>turing</code>'});
   }
   
   obj.acceptStates = _.castArray(obj["accept states"] || obj["accept state"]).map(String);
@@ -164,6 +167,7 @@ function parseSpec(str) {
         break;
       default:
         throw new TMSpecError("only fsa and pda can specify epsilon symbol");
+    }
   }
 
   // parse synonyms and transition table
@@ -206,7 +210,7 @@ function parseSynonyms(val, table) {
   }
   return _.mapValues(val, function (actionVal, key) {
     try {
-      return parseInstruction(null, table, actionVal);
+      return parseInstruction(null, table, null, actionVal);
     } catch (e) {
       if (e instanceof TMSpecError) {
         e.details.synonym = key;
@@ -233,7 +237,7 @@ function parseTable(synonyms, val) {
     }
     return _.mapValues(stateObj, function (actionVal, symbol) {
       try {
-        return parseInstruction(synonyms, val, actionVal);
+        return parseInstruction(synonyms, val, state, actionVal);
       } catch (e) {
         if (e instanceof TMSpecError) {
           e.details.state = state;
@@ -250,11 +254,14 @@ function makeInstruction_FSA(states) {
   return Object.freeze({state: _.castArray(states).map(String)});
 }
 
+function makeInstruction_PDA(pop, push, state) {
+  return Object.freeze({pop: pop, push: push, state: state});
+}
+
 // omits null/undefined properties
 // (?string, direction, ?string) -> {symbol?: string, move: direction, state?: string}
 function makeInstruction_Tape(symbol, move, state) {
-  return Object.freeze(_.omitBy({symbol: symbol, move: move, state: state},
-    function (x) { return x == null; }));
+  return Object.freeze({symbol: symbol, move: move, state: state});
 }
 
 function checkTarget(table, instruct) {
@@ -273,11 +280,11 @@ function checkTarget(table, instruct) {
 // throws if the target state is undeclared (not in the table)
 // type SynonymMap = {[key: string]: TMAction}
 // (SynonymMap?, Object, string | Object) -> TMAction
-function parseInstruction(synonyms, table, val) {
+function parseInstruction(synonyms, table, currState, val) {
   return checkTarget(table, function () {
     switch (typeof val) {
-      case 'string': return parseInstructionString(synonyms, val);
-      case 'object': return parseInstructionObject(val);
+      case 'string': return parseInstructionObject(currState, parseInstructionString(synonyms, val));
+      case 'object': return parseInstructionObject(currState, val);
       default: throw new TMSpecError('Invalid instruction type',
         {problemValue: typeof val,
           info: 'An instruction can be a string (a direction <code>L</code>/<code>R</code> or a synonym)'
@@ -298,19 +305,22 @@ function parseInstructionString(synonyms, val) {
 }
 
 /*
-type ActionObj =
-    {states: String}
+type val =
+    null
+  | String
+  | [String]
+  | {states: String}
   | {states: [String]}
 */
-function parseInstructionObject_FSA(val) {
-  if (val == null) { throw new TMSpecError('Missing instruction');}
+function parseInstructionObject_FSA(currState, val) {
+  if (val == null) return makeInstruction_FSA(currState);
+  else if (typeof val === "string") return makeInstruction_FSA(val);
   else if (val instanceof Array) {
     if (_.every(val, (item) => typeof item === "string"))
-      return makeInstruction_FSA(_.map(val, (item) => String(item)));
+      return makeInstruction_FSA(val);
     else
       throw new TMSpecError("Unrecognized state transition", {problemValue: val});
   }
-  else if (typeof val === "string") return makeInstruction_FSA([String(val)]);
   else if (val instanceof Object &&
            "state" in val &&
            _.keys(val).length === 1) { return makeInstruction_FSA(val.state); }
@@ -320,12 +330,45 @@ function parseInstructionObject_FSA(val) {
     });
 }
 
+// type val = {
+//   pop? : String | [String]
+//   push? : String | [String]
+//   state?: String
+// }
+function parseInstructionObject_PDA(currState, val) {
+  if (val instanceof Array)
+    return _.flatMap(val, (item) => 
+      parseInstructionObject_PDA(currState, item));
+  
+  function toStringArray(val) {
+    return _.uniq(
+      _.map(
+        _.flattenDeep([val || []]),
+        String
+      )
+    );
+  }
+  
+  var pop  = toStringArray(val.pop),
+      push = toStringArray(val.push),
+      state = _.uniq(
+        toStringArray(val.state) +
+        _.difference(
+          toStringArray(Object.keys(val)),
+          ["pop", "push", "state"]
+        )
+      );
+  if (state.length == 0) state = [currState];
+      
+  return _.castArray(makeInstruction_PDA(pop, push, state));
+}
+
 // type val =
 //     {write?: any,
 //      L: ?string}
 //   | {write?: any,
 //      R: ?string}
-function parseInstructionObject_Tape(val) {
+function parseInstructionObject_Tape(currState, val) {
   var symbol, move, state;
   if (val == null) { throw new TMSpecError('Missing instruction'); }
   
@@ -348,6 +391,7 @@ function parseInstructionObject_Tape(val) {
      problemValue: val.move});
     
   state = _.compact(_.concat(val.state, val.L, val.R)).filter(String);
+  if (state.length == 0) state = currState ? [currState] : null;  
 
   symbol = val.write ? String(val.write) : null;
   

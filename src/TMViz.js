@@ -10,9 +10,11 @@
  */
 
 var TuringMachine = require('./TuringMachine').TuringMachine,
+    PDA = require('./PDA').PDA,
     FSA = require('./FSA').FSA,
     TapeViz = require('./tape/TapeViz'),
     BoundedTapeViz = require('./tape/BoundedTapeViz'),
+    StackViz = require('./tape/StackViz'),
     StateGraph = require('./state-diagram/StateGraph'),
     StateViz = require('./state-diagram/StateViz'),
     watchInit = require('./watch').watchInit,
@@ -71,6 +73,11 @@ function addBoundedTape(div, spec) {
     spec.input);
 }
 
+function addStack(div) {
+  return new StackViz(div.append('svg').attr('class', 'stack'), 9,
+    []);
+}
+
 function addTape(div, spec) {
   return new TapeViz(div.append('svg').attr('class', 'tm-tape'), 9,
     spec.blank, spec.input);
@@ -90,7 +97,7 @@ function TMViz(div, spec, posTable) {
     div,
     graph.getVertexMap(),
     graph.getEdges(),
-    spec.startState,
+    spec.startStates,
     spec.acceptStates
   );
   if (posTable != undefined) { this.positionTable = posTable; }
@@ -122,16 +129,23 @@ function TMViz(div, spec, posTable) {
   if (spec.type === "fsa")
     this.machine = new FSA(
       animatedTransition(graph, animateAndContinue),
-      spec.startState,
+      spec.startStates,
       spec.acceptStates,
       spec.epsilonTransition,
       addBoundedTape(div, spec)
-      //addTape(div, spec)
+    );
+  else if (spec.type === "pda")
+    this.machine = new PDA(
+      animatedTransition(graph, animateAndContinue),
+      spec.startStates,
+      spec.acceptStates,
+      addBoundedTape(div, spec),
+      addStack(div)
     );
   else if (spec.type === "turing")
     this.machine = new TuringMachine(
       animatedTransition(graph, animateAndContinue),
-      spec.startState,
+      spec.startStates,
       addTape(div, spec)
     );
   // intercept and animate when the state is set
