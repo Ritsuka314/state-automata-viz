@@ -3,7 +3,8 @@
 var parseSpec = require('./parser').parseSpec,
     TMViz = require('./TMViz'),
     watchInit = require('./watch').watchInit,
-    values = require('lodash').values;
+    values = require('lodash').values,
+    TMRuntimeError = require('./tape/TMRuntimeError');
 
 /**
  * Turing machine simulator component.
@@ -113,8 +114,33 @@ TMSimulator.prototype.htmlForRunButton =
 TMSimulator.prototype.htmlForPauseButton =
   '<span class="glyphicon glyphicon-pause" aria-hidden="true"></span><br>Pause';
 
+function setAlertErrors (div, errors) {
+  var self = this;
+  var alerts = d3.select(div).selectAll('.alert')
+    .data(errors, function (e) { return String(e); }); // key by error description
+
+  alerts.exit().remove();
+
+  alerts.enter()
+    .append('div')
+      .attr('class', 'alert alert-danger')
+      .attr('role', 'alert')
+      .each(/** @this div */ function (e) {
+        var div = d3.select(this);
+        if (e instanceof TMRuntimeError) {
+          div.append('strong')
+              .text(e.reason)
+          div.append('br');
+          div.append('span')
+              .text(e.details);
+        } else {
+          div.html('<strong>Unexpected error</strong>: ' + e);
+        }
+      });
+};
+
 // bind: .disabled for Step and Run, and .innerHTML (Run/Pause) for Run
-function rebindStepRun(stepButton, runButton, runHTML, pauseHTML, machine) {
+function rebindStepRun(stepButton, runButton, runHTML, pauseHTML, simulatorAlerts, machine) {
   function onHaltedChange(isHalted) {
     stepButton.disabled = isHalted;
     runButton.disabled = isHalted;
@@ -130,6 +156,14 @@ function rebindStepRun(stepButton, runButton, runHTML, pauseHTML, machine) {
     onRunningChange(isRunning);
     return isRunning;
   });
+  watchInit(machine, 'error', function (prop, oldval, error) {
+    if (error) {
+      console.log(error);
+      setAlertErrors(simulatorAlerts, [error]);
+    } else {
+      setAlertErrors(simulatorAlerts, []);
+    }
+  });
 }
 
 // internal method.
@@ -138,7 +172,7 @@ TMSimulator.prototype.rebindButtons = function () {
   var enable = (this.machine != null);
   if (enable) {
     rebindStepRun(buttons.step, buttons.run,
-      this.htmlForRunButton, this.htmlForPauseButton, this.machine);
+      this.htmlForRunButton, this.htmlForPauseButton, buttons.simulatorAlerts, this.machine);
   }
   buttons.all.forEach(function (b) { b.disabled = !enable; });
 };

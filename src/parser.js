@@ -341,12 +341,7 @@ function parseInstructionObject_PDA(currState, val) {
       parseInstructionObject_PDA(currState, item));
   
   function toStringArray(val) {
-    return _.uniq(
-      _.map(
-        _.flattenDeep([val || []]),
-        String
-      )
-    );
+    return _.map(_.isNil(val) ? [] : _.castArray(val), String);
   }
   
   var pop  = toStringArray(val.pop),

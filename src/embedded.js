@@ -27,6 +27,7 @@ window.vizAutomaton = function (root, doc) {
       </div>
       <!-- Simulator controls -->
       <div class="row text-center controls-container">
+        <div id="simulator-alerts-container"></div>
         <div class="col-xs-1">
           <button type="button" class="btn btn-warning btn-xs text-center tm-btn-diagram tm-reset">
             <span class="glyphicon glyphicon-fast-backward" aria-hidden="true"></span><br>
@@ -108,7 +109,8 @@ window.vizAutomaton = function (root, doc) {
       simulator: {
         run: getButton(sim, 'run'),
         step: getButton(sim, 'step'),
-        reset: getButton(sim, 'reset')
+        reset: getButton(sim, 'reset'),
+        simulatorAlerts: getId('simulator-alerts-container')
       }
     }, doc);
   }());

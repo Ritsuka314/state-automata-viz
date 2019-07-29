@@ -1,6 +1,7 @@
 'use strict';
 
-var _ = require('lodash');
+var _ = require('lodash'),
+    TMRuntimeError = require('./tape/TMRuntimeError');
 
 /**
  * Construct a Turing machine.
@@ -34,27 +35,27 @@ PDA.prototype.onStack = function(s) {
  *   false otherwise (machine halted)
  */
 PDA.prototype.step = function () {
-  var instructs = this.nextInstruction;
-  if (instructs == null) { return false; }
+  var instructs = _(this.nextInstruction)
+    .filter(instruct => this.stack.isOn(instruct.pop))
+    .value();
+  // reject
   if (instructs.length == 0) { return false; }
+  // nondeterministic
+  if (instructs.length > 1) {
+    throw new TMRuntimeError("Cannot simulate nondeterministic step",
+      "Transitions from state " + this.state + ": " + JSON.stringify(instructs));
+  }
 
-  var idx;
-  for (idx in instructs ){
-    var instruct = instructs[idx];
-    if (this.stack.isOn(instruct.pop)) {
-      this.stack.pop(instruct.pop.length);
-      this.stack.push(instruct.push);      
-      this.state = instruct.state;
-      try {
-        move(this.tape, MoveHead.right);
-      } catch (e) {
-        return false;
-      }
-      return true;
-    }
-  };
-  
-  return false;
+  var instruct = instructs[0];
+  this.stack.pop(instruct.pop.length);
+  this.stack.push(instruct.push);
+  this.state = instruct.state;
+  try {
+    move(this.tape, MoveHead.right);
+  } catch (e) {
+    return false;
+  }
+  return true;
 };
 
 Object.defineProperties(PDA.prototype, {

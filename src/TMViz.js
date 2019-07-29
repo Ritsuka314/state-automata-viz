@@ -186,6 +186,7 @@ function TMViz(div, spec, posTable) {
     }
   });
 
+  this.error = null;
   this.__parentDiv = div;
   this.__spec = spec;
 }
@@ -194,9 +195,12 @@ function TMViz(div, spec, posTable) {
  * Step the machine immediately and interrupt any animations.
  */
 TMViz.prototype.step = function () {
-  if (!this.machine.step()) {
+  var rst = _.attempt(() => this.machine.step() /*to keep `this`*/);
+  if (rst === false || _.isError(rst)) {
     this.isRunning = false;
     this.isHalted = true;
+    if (_.isError(rst))
+      this.error = rst;
   }
 };
 
@@ -206,10 +210,16 @@ TMViz.prototype.step = function () {
 TMViz.prototype.reset = function () {
   this.isRunning = false;
   this.isHalted = false;
-  this.machine.state = this.__spec.startState;
+  this.error = null;
+  this.machine.state = this.__spec.startStates;
   this.machine.tape.domNode.remove();
   if (this.machine instanceof FSA)
     this.machine.tape = addBoundedTape(this.__parentDiv, this.__spec);
+  else if (this.machine instanceof PDA) {
+    this.machine.tape = addBoundedTape(this.__parentDiv, this.__spec);
+    this.machine.stack.domNode.remove();
+    this.machine.stack = addStack(this.__parentDiv); 
+  }
   else if (this.machine instanceof TuringMachine)
     this.machine.tape = addTape(this.__parentDiv, this.__spec);
 };

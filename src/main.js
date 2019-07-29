@@ -299,7 +299,8 @@ var controller = (function () {
     simulator: {
       run: getButton(sim, 'run'),
       step: getButton(sim, 'step'),
-      reset: getButton(sim, 'reset')
+      reset: getButton(sim, 'reset'),
+      simulatorAlerts: document.getElementById('simulator-alerts-container')
     },
     editor: {
       load: getButton(ed, 'editor-load'),

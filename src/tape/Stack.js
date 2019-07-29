@@ -18,7 +18,7 @@ Stack.prototype.isOn = function (s) {
 
 Stack.prototype.pop = function(l) {
   if (this.content.length < l) {
-    throw TMRuntimeError("Poping from empty stack.");
+    throw new TMRuntimeError("Poping from empty stack.");
   }
   else if (l) {
     this.content = _.slice(0)(this.content.length - l)(this.content);

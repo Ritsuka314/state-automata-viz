@@ -39,14 +39,14 @@ BoundedTape.prototype.write = function (symbol) {
 BoundedTape.prototype.headRight = function () {
   var tape = this.tape;
   if (tape.head + 1 >= tape.content.length)
-    throw TMRuntimeError();
+    throw new TMRuntimeError();
   else
     tape.head++;
 };
 BoundedTape.prototype.headLeft = function () {
   var tape = this.tape;
   if (tape.head - 1 < 0) 
-    throw TMRuntimeError();
+    throw new TMRuntimeError();
   else
     tape.head--;
 };
