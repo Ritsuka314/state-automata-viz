@@ -1,4 +1,4 @@
-name: FSA has substring 110
+name: FSA has substring 010
 source code: |
   input: "01101001"
   start state: A
