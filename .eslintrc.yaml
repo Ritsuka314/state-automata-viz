@@ -33,6 +33,10 @@ rules:
   strict:
     - 2
     - global
+  no-console: off
 env:
   commonjs: true
+  browser: true
 extends: eslint:recommended
+parserOptions:
+  ecmaVersion: 2018
