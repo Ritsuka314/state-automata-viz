@@ -86,14 +86,6 @@ function parseSpec(str) {
   if (obj == null) { throw new TMSpecError('The document is empty',
     {info: 'Every Turing machine requires a <code>blank</code> tape symbol,' +
     ' a <code>start state</code>, and a transition <code>table</code>'}); }
-    
-  function ensureBlankDefined() {
-    var detailsForBlank = {suggestion:
-      'Examples: <code>blank: \' \'</code>, <code>blank: \'0\'</code>'};
-    if (obj.blank == null) {
-      throw new TMSpecError('No blank symbol was specified', detailsForBlank);
-    }
-  }
   
   obj.startStates = _.castArray(obj['start state'] || obj['start states']).map(String);
   delete obj['start state'], obj['start states'];
