@@ -114,7 +114,7 @@ function parseSpec(str) {
   obj.synonyms = Object.assign(obj.synonyms || {},
     _.zipObject(
       states,
-      _.map(states, (s) => {return {state: [s]}})
+      _.map(states, (s) =>  ({state: [s]}))
     )
   );
   
