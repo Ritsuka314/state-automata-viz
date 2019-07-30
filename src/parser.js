@@ -98,7 +98,7 @@ function parseSpec(str) {
     else if (typeof s === "string" || s instanceof String)
       return s.split("");
     else
-      throw new TMSpec("Unrecognized input format", {
+      throw new TMSpecError("Unrecognized input format", {
         problemValue: s,
         info: "Automaton input can either be a string or an array."
       })
