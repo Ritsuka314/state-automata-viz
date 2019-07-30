@@ -173,6 +173,8 @@ function parseSpec(str) {
     throw new TMSpecError('The start state has to be declared in the transition table',
     {problemValue: badStates});
   }
+  
+  obj.simulatable = checkSimulatable(obj);
 
   return obj;
 }
@@ -186,6 +188,65 @@ function checkTableType(val) {
     throw new TMSpecError('Transition table has an invalid type',
     {problemValue: typeof val,
     info: 'The transition table should be a nested mapping from states to symbols to instructions'});
+  }
+}
+
+function isPrefix(arr1, arr2) {
+  return _.isEqual(arr1, _.take(arr2, arr1.length)) ||
+         _.isEqual(arr2, _.take(arr1, arr2.length));
+}
+
+function checkSimulatable(spec) {
+  switch (spec.type) {
+    case "fsa":
+      return true;
+    case "pda":
+      if (spec.startStates.length > 1) return false;
+
+      var rst = _(spec.table)
+        .mapValues(stateObj =>
+          _(stateObj)
+            .mapValues((actions, symbol) =>
+              _(actions)
+                .map(action =>
+                  [symbol, action.pop, action.push])
+                .value())
+            .values()
+            .flatten()
+            .value())
+        .mapValues(outs =>
+          _(_.range(outs.length))
+            .map(i =>
+              _(_.range(i+1, outs.length))
+                .map(j => {
+                  var out1 = outs[i],
+                    out2 = outs[j];
+                  if (_.isEqual(out1, out2)) return null;
+                  else if ((out1[0] === out2[0] || out1[0] === spec.epsilon || out2[0] === spec.epsilon) &&
+                    isPrefix(out1[1], out2[1])) return [out1, out2];
+                  else return null;})
+                .filter(item => !_.isNil(item))
+                .value())
+            .flatten()
+            .value())
+        .pickBy(item => item.length)
+        .value();
+
+      var label = (trans) => trans[0] + ', [' + trans[1] + '] ↦ [' + trans[2] + ']';
+      var pair2str = (pair) => label(pair[0]) + (pair.length > 1 ? " AND " + label(pair[1]) : "");
+
+      console.log("Non deterministic transition pairs in PDA:")
+      _.forOwn(rst, (pairs, state) => {
+        state = "In state " + state + ":";
+        console.log(state, pair2str(pairs[0]));
+
+        var indent = _.repeat(" ", state.length);
+        _(pairs)
+          .drop(1)
+          .forEach(pair => console.log(indent, pair2str(pair)));
+      });
+
+      return _.isEmpty(rst);
   }
 }
 
