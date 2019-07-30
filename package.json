@@ -17,7 +17,10 @@
     "debug": "node --inspect-brk node_modules/webpack/bin/webpack.js --config webpack.config.js",
     "dev": "webpack-dev-server --open"
   },
-  "dependencies": {},
+  "dependencies": {
+    "js-yaml": "^3.13.1",
+    "lodash": "^4.17.11"
+  },
   "devDependencies": {
     "eslint": "^3.0.0",
     "file-loader": "^0.8.5",
