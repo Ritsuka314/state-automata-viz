@@ -1,5 +1,5 @@
 'use strict';
-/* eslint-env node, es6 */
+/* eslint-env node, es2018 */
 const path = require('path');
 const webpack = require('webpack');
 
@@ -61,21 +61,11 @@ const commonConfig = {
     'lodash': 'lodash',
     'lodash/fp': '_'
   },
-  plugins: [
-    new webpack.optimize.CommonsChunkPlugin({
-      // Note on ordering:
-      // Each "commons chunk" takes modules shared with any previous chunks,
-      // including other commons. Later commons therefore contain the fewest dependencies.
-      // For clarity, reverse this to be consistent with browser include order.
-      // names: ['util', 'TuringMachine', 'TapeViz', 'StateViz'].reverse()
-      names: ['TMViz'].reverse()
-    })
-  ],
   module: {
-    loaders: [
+    rules: [
       // copy files verbatim
       { test: /\.css$/,
-        loader: 'file',
+        loader: 'file-loader',
         query: {
           name: '[path][name].[ext]',
           context: srcRoot
@@ -83,6 +73,7 @@ const commonConfig = {
       }
     ]
   },
+  //devtool: "source-map"
   devtool:'cheap-module-source-map',//debug时可以查找到相应js 而不是打包后的js
   devServer: {
     historyApiFallback: true,//允许热更新时 解决history路径的刷新失败
@@ -101,8 +92,8 @@ const devConfig = {
 const prodConfig = {
   devtool: 'source-map', // for the curious
   plugins: [
-    new webpack.optimize.OccurrenceOrderPlugin(true),
-    new webpack.optimize.UglifyJsPlugin({compress: {warnings: false}})
+    //new webpack.optimize.OccurrenceOrderPlugin(true),
+    //new webpack.optimize.UglifyJsPlugin({compress: {warnings: false}})
   ]
 };
 

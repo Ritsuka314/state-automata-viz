@@ -9,7 +9,7 @@ function requireExample(name) {
   return context(name);
 }
 
-var context = require.context('raw!./examples', false, /\.yaml$/);
+var context = require.context('raw-loader!./examples', false, /\.yaml$/);
 
 var examplePairs = context
   .keys()
@@ -38,4 +38,4 @@ exports.hasID = isExampleID;
 exports.get = get;
 exports.list = list;
 exports.firsttimeDocID = 'binaryIncrement';
-exports.blankTemplate = require('raw!./examples/_template.yaml');
+exports.blankTemplate = require('raw-loader!./examples/_template.yaml');
