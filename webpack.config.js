@@ -70,6 +70,11 @@ const commonConfig = {
           name: '[path][name].[ext]',
           context: srcRoot
         }
+      },/*
+      {
+        test: /\.css$/,
+        use: [{ loader: 'style-loader/url' }, { loader: 'file-loader' }],
+      },*/
       }
     ]
   },
