@@ -1,6 +1,6 @@
 'use strict';
 
-var parseSpec = require('./parser').parseSpec,
+var parseSpec = require('./parser.ts').parseSpec,
     TMViz = require('./TMViz'),
     watchInit = require('./watch').watchInit,
     values = require('lodash').values,

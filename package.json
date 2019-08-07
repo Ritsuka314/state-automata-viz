@@ -18,16 +18,25 @@
     "dev": "webpack-dev-server --open"
   },
   "dependencies": {
+    "class-transformer": "^0.2.3",
+    "class-validator": "^0.9.1",
     "common-tags": "^1.8.0",
     "js-yaml": "^3.13.1",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.11",
+    "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
+    "@types/js-yaml": "^3.12.1",
+    "@types/lodash": "^4.14.136",
+    "@types/mocha": "^5.2.7",
+    "awesome-typescript-loader": "^5.2.1",
     "css-loader": "^3.1.0",
     "eslint": "^3.0.0",
     "file-loader": "^0.8.5",
     "raw-loader": "^0.5.1",
+    "source-map-loader": "^0.2.4",
     "style-loader": "^0.23.1",
+    "typescript": "^3.5.3",
     "webpack": "^4.38.0",
     "webpack-cli": "^3.3.6",
     "webpack-dev-server": "^3.7.2"

@@ -1,6 +1,6 @@
 'use strict';
 var TMSimulator = require('./TMSimulator'),
-    parser = require('./parser'),
+    parser = require('./parser.ts'),
     util = require('./util'),
     d3 = require('d3');
 var TMSpecError = parser.TMSpecError;

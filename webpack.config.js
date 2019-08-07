@@ -19,7 +19,7 @@ function merge(x, y) {
   if (x instanceof Array && y instanceof Array) {
     return x.concat(y);
   } else if (Object.getPrototypeOf(x) === Object.prototype &&
-             Object.getPrototypeOf(y) === Object.prototype) {
+    Object.getPrototypeOf(y) === Object.prototype) {
     // for safety, only plain objects are merged
     let result = {};
     (new Set(Object.keys(x).concat(Object.keys(y)))).forEach(function (key) {
@@ -43,6 +43,10 @@ const commonConfig = {
     TMViz: [srcRoot + 'TMViz.js'],
     embedded: srcRoot + 'embedded.js',
     main: srcRoot + 'main.js'
+  },
+  resolve: {
+    // changed from extensions: [".js", ".jsx"]
+    extensions: ['.ts', '.tsx', '.js', '.jsx']
   },
   output: {
     library: '[name]',
@@ -75,6 +79,15 @@ const commonConfig = {
         test: /\.css$/,
         use: [{ loader: 'style-loader/url' }, { loader: 'file-loader' }],
       },*/
+      { test: /\.(t|j)sx?$/,
+        loader: 'awesome-typescript-loader',
+        exclude: '/node_modules/'
+      },
+      // addition - add source-map support
+      { enforce: "pre",
+        test: /\.js$/,
+        loader: "source-map-loader",
+        exclude: '/node_modules/'
       }
     ]
   },
