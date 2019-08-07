@@ -58,11 +58,12 @@ function isPrefix(arr1, arr2) {
 
 let automatonTypes = ['fsa', 'pda', 'tm'];
 
-export type FSATransition = {from: string, read: string, to: string};
-export type PDATransition = {from: string, read: string, push: string[], pop: string[], to: string};
-export type TMTransition = {from: string, read: string, write: string, move: string, to: string};
+export type FSATransition = {from: string, read: string, to: string}
+export type PDATransition = {from: string, read: string, push: string[], pop: string[], to: string}
+export type TMTransition = {from: string, read: string, write: string, move: string, to: string}
+export type Transition = FSATransition | PDATransition | TMTransition;
 
-type TransitionTable<T> = {[state: string] : {[symbol: string]: T[]}};
+export type TransitionTable<T extends Transition> = {[state: string] : {[symbol: string]: T[]}};
 
 export type FSATransitionTable = TransitionTable<FSATransition>;
 export type PDATransitionTable = TransitionTable<PDATransition>;
