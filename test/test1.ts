@@ -400,6 +400,22 @@ describe('Parser', function() {
           });
         });
 
+        it('state as key', function () {
+          let str = stripIndent`
+            type: pda
+            table:
+              A:
+                0: {push: i, pop: j, A}
+            `;
+
+          let spec = parseSpec(str);
+          assert.deepStrictEqual(spec.table,    {
+            A: {
+              '0': [{ from: 'A', read: '0', push: ['i'], pop: ['j'], to: 'A' }]
+            }
+          });
+        });
+
         it('non string state', function () {
           let str = stripIndent`
             type: pda

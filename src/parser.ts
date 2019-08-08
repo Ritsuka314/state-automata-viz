@@ -177,16 +177,35 @@ export class AutomatonSpec {
                 )
               )
               .on(_.matches('pda'), () =>
-                _.castArray(trans || {})
-                .map((trans): PDATransition =>
-                  ({
-                    from: from,
-                    read: symbol,
-                    pop: _.castArray(trans.pop || []).map(String),
-                    push: _.castArray(trans.push || []).map(String),
-                    to: String(trans.state || from)
-                  })
+                _.chain(trans || {})
+                .castArray()
+                .flatMap((trans): PDATransition[] =>
+                  _
+                  .chain(toStringArray(trans.state))
+                  .unionWith(
+                    toStringArray(trans.states),
+                    _.isEqual
+                  )
+                  .unionWith(
+                    _.difference(
+                      toStringArray(Object.keys(val)),
+                      ["pop", "push", "state", "states"]
+                    ),
+                    _.isEqual
+                  )
+                  .map(String)
+                  .thru((states) => _.isEmpty(states) ? [from] : states)
+                  .map((to) =>
+                    ({
+                      from: from,
+                      read: symbol,
+                      pop: _.castArray(trans.pop || []).map(String),
+                      push: _.castArray(trans.push || []).map(String),
+                      to: to
+                    }))
+                  .value()
                 )
+                .value()
               )
               .otherwise(/*_.matches('tm'), */() =>
                 _.castArray(trans || {})
