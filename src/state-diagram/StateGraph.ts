@@ -3,7 +3,7 @@
 import _ from '../lodash-mixins';
 import {FSATransition, PDATransition, TMTransition, Transition, TransitionTable} from '../parser';
 
-interface Vertex<T extends Transition> {
+interface Vertex<T extends Transition> extends SimulationNodeDatum {
   label: string,
   outTrans: {
     [symbol: string]: {
@@ -17,7 +17,9 @@ interface VertexLUT<T extends Transition> {
   [state: string]: Vertex<T>
 }
 
-type LayoutEdge<T extends Transition> = { from: Vertex<T>, to: Vertex<T>, labels: string[] }
+import { SimulationLinkDatum, SimulationNodeDatum } from 'd3-force';
+// SimulationLinkDatum<NodeDatum extends SimulationNodeDatum>
+interface LayoutEdge<T extends Transition> extends SimulationLinkDatum<Vertex<T>> { labels: string[] }
 
 type Graph<T extends Transition> = {vertices: VertexLUT<T>, edges: LayoutEdge<T>[]};
 
@@ -59,8 +61,8 @@ function deriveGraph<T extends Transition>(table: TransitionTable<T>, type: stri
       function edgeTo(target: string, label: string): LayoutEdge<T> {
         let edge = cache[target] ||
           _.tap(cache[target] = {
-            from: vertex,
-            to: vertices[target],
+            source: vertex,
+            target: vertices[target],
             labels: []
           }, edges.push.bind(edges));
         edge.labels.push(label);
