@@ -42,7 +42,7 @@ describe('Parser', function() {
             name: _.partial(_.isEqual, 'TMSpecError'),
             reason: _.partial(_.isEqual, 'Validation Error'),
             details: _.conforms({
-              info: (lst) => _.find(lst, _.conforms({
+              validationErrors: (lst) => _.find(lst, _.conforms({
                 constraints: _.conforms({
                   isIn: _.partial(_.isEqual, 'Automaton must be of type ["fsa","pda","tm"]')
                 })
@@ -246,7 +246,7 @@ describe('Parser', function() {
               name: _.partial(_.isEqual, 'TMSpecError'),
               reason: _.partial(_.isEqual, 'Validation Error'),
               details: _.conforms({
-                info: (lst) => _.find(lst, _.conforms({
+                validationErrors: (lst) => _.find(lst, _.conforms({
                   constraints: _.conforms({
                     StatesDeclared: _.partial(_.isEqual, 'All start states must be declared')
                   })
@@ -268,7 +268,7 @@ describe('Parser', function() {
               name: _.partial(_.isEqual, 'TMSpecError'),
               reason: _.partial(_.isEqual, 'Validation Error'),
               details: _.conforms({
-                info: (lst) => _.find(lst, _.conforms({
+                validationErrors: (lst) => _.find(lst, _.conforms({
                   constraints: _.conforms({
                     AllStatesDeclared: _.partial(_.isEqual, 'All states must be declared')
                   })
@@ -322,7 +322,7 @@ describe('Parser', function() {
               name: _.partial(_.isEqual, 'TMSpecError'),
               reason: _.partial(_.isEqual, 'Validation Error'),
               details: _.conforms({
-                info: (lst) => _.find(lst, _.conforms({
+                validationErrors: (lst) => _.find(lst, _.conforms({
                   constraints: _.conforms({
                     EpsilonNotInInput: _.partial(_.isEqual, 'input string cannot contain the epsilon symbol')
                   })
@@ -564,7 +564,7 @@ describe('Parser', function() {
               name: _.partial(_.isEqual, 'TMSpecError'),
               reason: _.partial(_.isEqual, 'Validation Error'),
               details: _.conforms({
-                info: (lst) => _.find(lst, _.conforms({
+                validationErrors: (lst) => _.find(lst, _.conforms({
                   constraints: _.conforms({
                     isDefined: _.partial(_.isEqual, 'blank should not be null or undefined')
                   })
@@ -584,7 +584,7 @@ describe('Parser', function() {
               name: _.partial(_.isEqual, 'TMSpecError'),
               reason: _.partial(_.isEqual, 'Validation Error'),
               details: _.conforms({
-                info: (lst) => _.find(lst, _.conforms({
+                validationErrors: (lst) => _.find(lst, _.conforms({
                   constraints: _.conforms({
                     isDefined: _.partial(_.isEqual, 'blank should not be null or undefined')
                   })

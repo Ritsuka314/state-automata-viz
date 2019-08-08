@@ -1,7 +1,6 @@
 'use strict';
 
 import * as _ from 'lodash';
-import * as util from "util";
 
 class TMSpecError extends Error {
   public reason;
@@ -26,27 +25,17 @@ class TMSpecError extends Error {
     let details = this.details;
 
     function code(str) { return '<code>' + str + '</code>'; }
-    function showLoc(state, symbol, synonym) {
-      if (state != null) {
-        if (symbol != null) {
-          return ' in the transition from state ' + code(state) + ' and symbol ' + code(symbol);
-        } else {
-          return ' for state ' + code(state);
-        }
-      } else if (synonym != null) {
-        return ' in the definition of synonym ' + code(synonym);
-      }
-      return '';
-    }
 
     let problemValue = details.problemValue ? ' ' + code(details.problemValue) : '';
-    let location = showLoc(details.state, details.symbol, details.synonym);
-    let sentences = ['<strong>' + header + problemValue + '</strong>' + location
-      , details.info, details.suggestion]
-    .filter(_.identity)
-    .map((s) => s + '.');
-    if (location) { sentences.splice(1, 0, '<br>'); }
-    return sentences.join(' ');
+    let validationErrors =
+      '<code></code><pre style="text-align: left;">' +
+          // util.inspect(es, false, null, false) +
+          JSON.stringify(details.validationErrors, null, 4) +
+      '</pre></code>';
+    let sentences = ['<strong>' + header + problemValue + '</strong>'
+      , validationErrors]
+    .filter(_.identity);
+    return sentences.join('</br>');
   }
 }
 

@@ -334,8 +334,7 @@ export function parseSpec(str: string): AutomatonSpec {
   let es = validateSync(spec);
   console.log(util.inspect(es, false, null, true));
   if (es.length) throw new TMSpecError('Validation Error', {
-    //problemValue: util.inspect(es, false, null, false)
-    problemValue: '<pre style="text-align: left;">' + JSON.stringify(es, null, 4) + '</pre>'
+    validationErrors: es
   });
 
   return spec;
