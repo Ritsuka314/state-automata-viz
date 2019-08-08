@@ -9,9 +9,9 @@
  * @module
  */
 
-var TuringMachine = require('./TuringMachine').TuringMachine,
-    PDA = require('./PDA').PDA,
-    FSA = require('./FSA').FSA,
+var TuringMachine = require('./TM.ts').default,
+    PDA = require('./PDA.ts').default,
+    FSA = require('./FSA.ts').default,
     TapeViz = require('./tape/TapeViz'),
     BoundedTapeViz = require('./tape/BoundedTapeViz'),
     StackViz = require('./tape/StackViz'),
@@ -41,7 +41,7 @@ function animatedTransition(graph, animationCallback) {
               (tuple.edge);
       else
         animationCallback(tuple.edge);
-      return tuple.instruction;
+      return tuple.transition;
     }
   };
 }
@@ -142,14 +142,14 @@ function TMViz(div, spec, posTable) {
       addBoundedTape(div, spec),
       addStack(div)
     );
-  else if (spec.type === "turing")
+  else if (spec.type === "tm")
     this.machine = new TuringMachine(
       animatedTransition(graph, animateAndContinue),
       spec.startStates,
       addTape(div, spec)
     );
   // intercept and animate when the state is set
-  watchInit(this.machine, 'state', function (prop, oldstate, newstate) {
+  watchInit(this.machine, 'states', function (prop, oldstate, newstate) {
     if (oldstate instanceof Array)
       _.each((oldstate) =>
         d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false),
