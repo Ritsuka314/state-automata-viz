@@ -4,7 +4,7 @@ source code: |
   # that halts after 107 steps, leaving 13 1's on the tape.
   # It takes the most steps *and* prints the most 1's.
   blank: 0
-  start state: A
+  start states: A
   table:
     A: {0: {write: 1, R: B}, 1:           {L: B}}
     B: {0: {write: 1, L: A}, 1: {write: 0, L: C}}

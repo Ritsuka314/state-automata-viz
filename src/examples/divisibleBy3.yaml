@@ -21,7 +21,7 @@ source code: |
 
   # Now instead of tracking the entire number, just track the remainder.
   # It works the same way.
-  start state: q0
+  start states: q0
   table:
     q0:
       0: R       # 2*0 + 0 = 0

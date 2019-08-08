@@ -5,7 +5,7 @@ source code: |
   # Examples: '11*11' => '1001', '111*110' => '101010'.
   input: '11*101' # 3*5 = 15 (1111 in binary)
   blank: ' '
-  start state: start
+  start states: start
   table:
     # Prefix the input with a '+', and go to the rightmost digit.
     start:

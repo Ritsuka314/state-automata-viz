@@ -11,7 +11,7 @@ source code: |
   #   a machine that leaves the most non-blank symbols on the tape
   #   is called a busy beaver.
   blank: '0'
-  start state: A
+  start states: A
   table:
     A:
       0: {write: 1, R: B}

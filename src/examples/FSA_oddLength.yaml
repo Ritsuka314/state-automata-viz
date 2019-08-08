@@ -1,7 +1,7 @@
 name: FSA odd length
 source code: |
   input: "aababaa"
-  start state: q0
+  start states: q0
   type: fsa
   table:
     q0:

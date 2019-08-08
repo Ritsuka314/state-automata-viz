@@ -14,7 +14,7 @@ source code: |
   # Notice 10 ≡ 1 (mod 3). Therefore
   #   x' ≡ x + d (mod 3) .
   # Each step simply adds the new digit's remainder mod 3.
-  start state: q0
+  start states: q0
   table:
     q0:
       [0,3,6,9]: R     # 0 + 0 ≡ 0 (mod 3)

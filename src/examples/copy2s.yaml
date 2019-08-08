@@ -3,7 +3,7 @@ source code: |
   # Copies a string of consecutive 1s.
   input: '111'
   blank: 0
-  start state: each
+  start states: each
   table:
     # mark the current 1 by erasing it
     each:

@@ -5,7 +5,7 @@ source code: |
   #    the Entscheidungsproblem".
   # It simply writes the endless sequence 0 1 0 1 0 1...
   blank: ' '
-  start state: b
+  start states: b
   table:
     b:
       ' ': {write: 0, R: c}

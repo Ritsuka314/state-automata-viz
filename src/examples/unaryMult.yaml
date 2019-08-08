@@ -8,7 +8,7 @@ source code: |
   # The idea:
   #   multiply(0, b) = 0
   #   multiply(a, b) = b + multiply(a-1, b)   when a > 0
-  start state: eachA
+  start states: eachA
   table:
     # For each 1 in a, add a copy of b.
     eachA:

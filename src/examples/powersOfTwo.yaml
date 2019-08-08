@@ -9,7 +9,7 @@ source code: |
   # to make it easier to understand.
   input: '0000' # try '0', '000', '00000000'
   blank: ' '
-  start state: zero
+  start states: zero
   synonyms:
     accept: {R: accept}
     reject: {R: reject}

@@ -3,7 +3,7 @@ source code: |
   # Accepts palindromes made of the symbols 'a' and 'b'
   input: 'abba' # try a, ab, bb, babab
   blank: ' '
-  start state: start
+  start states: start
   synonyms:
     accept: {R: accept}
     reject: {R: reject}

@@ -6,7 +6,7 @@ source code: |
   # equals the number of c's.)
   input: aabbbcccccc # try abc, b, aabcbc, aabcc, aabbbbcccccccc
   blank: ' '
-  start state: start
+  start states: start
 
   table:
     # Check for the form a^(i)b^(j)c^(k) where i,j,k ≥ 1.

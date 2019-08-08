@@ -3,7 +3,7 @@ source code: |
   # Adds 1 to a binary number.
   input: '1011'
   blank: ' '
-  start state: right
+  start states: right
   table:
     # scan to the rightmost digit
     right:

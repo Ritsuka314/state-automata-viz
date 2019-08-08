@@ -1,7 +1,7 @@
 name: FSA has substring 010
 source code: |
   input: "01101001"
-  start state: A
+  start states: A
   accept states: [D]
   type: fsa
   table:

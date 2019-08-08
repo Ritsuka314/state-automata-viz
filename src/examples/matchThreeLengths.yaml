@@ -8,7 +8,7 @@ source code: |
   # All a's must precede all b's, which must precede all c's.
   # When there are no more a's,
   # all input symbols should have been marked.
-  start state: qA
+  start states: qA
   table:
     qA:
       a: {write: A, R: qB}

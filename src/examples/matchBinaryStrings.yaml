@@ -6,7 +6,7 @@ source code: |
   blank: ' '
   # Two strings are equal if they are both the empty string,
   # or they start with the same symbol and are equal thereafter.
-  start state: start
+  start states: start
   table:
     start:
       # Inductive case: start with the same symbol.
