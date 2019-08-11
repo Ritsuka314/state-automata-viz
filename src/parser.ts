@@ -188,7 +188,7 @@ export class AutomatonSpec {
                   )
                   .unionWith(
                     _.difference(
-                      toStringArray(Object.keys(val)),
+                      toStringArray(Object.keys(trans)),
                       ["pop", "push", "state", "states"]
                     ),
                     _.isEqual
