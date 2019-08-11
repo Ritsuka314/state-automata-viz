@@ -822,8 +822,7 @@ describe('Parser', function() {
     });
 
     describe('Examples', function() {
-      var doc;
-      for (doc of list) {
+      for (let doc of list) {
         it(doc.id, () => {
           console.log(doc);
           assert.doesNotThrow(() => parseSpec(doc.sourceCode));
