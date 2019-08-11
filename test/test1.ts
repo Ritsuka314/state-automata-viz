@@ -1,7 +1,8 @@
 let assert = require('assert');
 import { parseSpec } from '../src/parser';
 import { stripIndent } from 'common-tags';
-import * as _ from "lodash";
+import _ from "../src/lodash-mixins";
+import { list } from '../src/examples.js';
 
 import {Exclude, Expose, classToPlain, plainToClass} from "class-transformer";
 
@@ -786,12 +787,14 @@ describe('Parser', function() {
               a: {write: , move: P, state: A}
           `;
 
-          assert.throws(() => parseSpec(str),    {
-            name: 'TMSpecError',
-            details: {
-              problemValue: 'P'
-            }
-          });
+          assert.throws(() => parseSpec(str),    _.conforms({
+            name: _.equalsTo('TMSpecError'),
+            details: _.conforms({
+              problemValue: _.conforms({
+                move: _.equalsTo('P')
+              })
+            })
+          }));
         });
 
         it('multiple', function () {
@@ -816,6 +819,16 @@ describe('Parser', function() {
           });
         });
       });
+    });
+
+    describe('Examples', function() {
+      var doc;
+      for (doc of list) {
+        it(doc.id, () => {
+          console.log(doc);
+          assert.doesNotThrow(() => parseSpec(doc.sourceCode));
+        })
+      }
     });
   });
 });

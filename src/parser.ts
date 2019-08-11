@@ -209,24 +209,36 @@ export class AutomatonSpec {
               )
               .otherwise(/*_.matches('tm'), */() =>
                 _.castArray(trans || {})
-                .map((trans): TMTransition =>
-                  ({
+                .map((trans): TMTransition => {
+                  console.log('trans:', util.inspect(trans));
+
+                  let tos = _.chain(trans).at(['state', 'L', 'R', 'S']).flatten().filter(_.identity).value();
+                  console.log('to[]:', util.inspect(tos));
+                  if (tos.length > 1)
+                    throw new TMSpecError('Ambiguous spec: can only specify one destination state per transition', {
+                      problemValue: trans
+                    });
+                  let to = tos[0] || from;
+
+                  let moves = _.chain(trans).keys().intersection(['L', 'R', 'S']).value();
+                  console.log('move[]:', util.inspect(moves));
+                  if (moves.length > 1)
+                    throw new TMSpecError('Ambiguous spec: can only specify one move direction per transition', {
+                      problemValue: trans
+                    });
+                  let move = moves[0]  || trans.move as string || 'S';
+                  if (!_.contains(['L', 'R', 'S'], move))
+                    throw new TMSpecError('Illegal move', {
+                      problemValue: trans
+                    });
+
+                  return {
                     from: from,
                     read: symbol,
-                    to: String(trans.state || from),
+                    to: String(to),
                     write: String(trans.write || symbol),
-                    move: String(trans.move || 'S')
-                  })
-                )
-                .map((trans) => {
-                  console.log(trans);
-                  console.log(_.contains(['L', 'R', 'S'], trans.move));
-                  if (_.contains(['L', 'R', 'S'], trans.move))
-                    return trans;
-                  else
-                    throw new TMSpecError('Illegal move', {
-                      problemValue: trans.move
-                    });
+                    move: String(move)
+                  };
                 })
               )
           }))
