@@ -146,6 +146,7 @@ function TMViz(div, spec, posTable) {
     this.machine = new TuringMachine(
       animatedTransition(graph, animateAndContinue),
       spec.startStates,
+      spec.acceptStates,
       addTape(div, spec)
     );
   // intercept and animate when the state is set
