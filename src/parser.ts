@@ -209,6 +209,7 @@ export class AutomatonSpec {
               )
               .otherwise(/*_.matches('tm'), */() =>
                 _.castArray(trans || {})
+                .map((trans) => _.isString(trans) ? {move: trans} : trans)
                 .map((trans): TMTransition => {
                   console.log('trans:', util.inspect(trans));
 
