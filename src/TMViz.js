@@ -102,6 +102,11 @@ function TMViz(div, spec, posTable) {
   );
   if (posTable != undefined) { this.positionTable = posTable; }
 
+  if (!spec.simulatable) {
+    this.step = () => {};
+    this.reset = () => {};
+  }
+
   this.edgeAnimation = pulseEdge;
   this.stepInterval = 100;
 

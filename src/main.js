@@ -295,7 +295,8 @@ var controller = (function () {
     simulator: document.getElementById('machine-container'),
     simulatorAlerts: document.getElementById('simulator-alerts-container'),
     editorAlerts: document.getElementById('editor-alerts-container'),
-    editor: editor
+    editor: editor,
+    controller: getId('controls-container')
   }, {
     controller: {
       run: getButton(controller, 'run'),

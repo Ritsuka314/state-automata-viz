@@ -2,7 +2,9 @@
 var TMSimulator = require('./TMSimulator'),
     parser = require('./parser.ts'),
     util = require('./util'),
-    d3 = require('d3');
+    d3 = require('d3'),
+    watchInit = require('./watch').watchInit;
+
 var TMSpecError = parser.TMSpecError;
 var YAMLException = parser.YAMLException;
 
@@ -33,7 +35,17 @@ require('./buttons.css');
  * @param {TMDocument} document The document to load from and save to.
  */
 function TMDocumentController(containers, buttons, document) {
-  this.simulator = new TMSimulator(containers.simulator, buttons.simulator, containers.simulatorAlerts);
+  this.simulator = new TMSimulator(containers.simulator, buttons.controller, containers.simulatorAlerts);
+  this.controller = containers.controller;
+
+  let self = this;
+  watchInit(this.simulator, '__machine', (prop, oldstate, newstate) => {
+    if (newstate !== null)
+      if(oldstate === null || newstate.__spec.simulatable !== newstate.__spec.simulatable)
+        self.controller.hidden = !newstate.__spec.simulatable;
+
+    return newstate;
+  });
 
   // running in embedded mode
   if (!containers.editor) {

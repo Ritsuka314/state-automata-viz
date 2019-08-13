@@ -105,7 +105,8 @@ window.vizAutomaton = function (root, doc) {
 
     return new TMDocumentController({
       simulator: getId('machine-container'),
-      simulatorAlerts: document.getElementById('simulator-alerts-container')
+      simulatorAlerts: document.getElementById('simulator-alerts-container'),
+      controller: controller
     }, {
       controller: {
         run: getButton(controller, 'run'),
