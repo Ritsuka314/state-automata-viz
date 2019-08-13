@@ -170,7 +170,7 @@ function rebindStepRun(stepButton, runButton, runHTML, pauseHTML, simulatorAlert
 // internal method.
 TMSimulator.prototype.rebindButtons = function () {
   var buttons = this.buttons;
-  var enable = (this.machine != null);
+  var enable = (this.machine != null && this.machine.__spec.simulatable);
   if (enable) {
     rebindStepRun(buttons.step, buttons.run,
       this.htmlForRunButton, this.htmlForPauseButton, this.simulatorAlerts, this.machine);
