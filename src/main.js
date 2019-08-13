@@ -293,14 +293,14 @@ var controller = (function () {
 
   return new TMDocumentController({
     simulator: document.getElementById('machine-container'),
+    simulatorAlerts: document.getElementById('simulator-alerts-container'),
     editorAlerts: document.getElementById('editor-alerts-container'),
     editor: editor
   }, {
     simulator: {
       run: getButton(sim, 'run'),
       step: getButton(sim, 'step'),
-      reset: getButton(sim, 'reset'),
-      simulatorAlerts: document.getElementById('simulator-alerts-container')
+      reset: getButton(sim, 'reset')
     },
     editor: {
       load: getButton(ed, 'editor-load'),

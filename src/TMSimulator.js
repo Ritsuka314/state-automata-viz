@@ -13,9 +13,10 @@ var parseSpec = require('./parser.ts').parseSpec,
  * @param {[type]} container [description]
  * @param {[type]} buttons   [description]
  */
-function TMSimulator(container, buttons) {
+function TMSimulator(container, buttons, simulatorAlerts) {
   this.container = container;
   this.buttons = buttons;
+  this.simulatorAlerts = simulatorAlerts;
 
   var self = this;
   buttons.step
@@ -172,7 +173,7 @@ TMSimulator.prototype.rebindButtons = function () {
   var enable = (this.machine != null);
   if (enable) {
     rebindStepRun(buttons.step, buttons.run,
-      this.htmlForRunButton, this.htmlForPauseButton, buttons.simulatorAlerts, this.machine);
+      this.htmlForRunButton, this.htmlForPauseButton, this.simulatorAlerts, this.machine);
   }
   buttons.all.forEach(function (b) { b.disabled = !enable; });
 };

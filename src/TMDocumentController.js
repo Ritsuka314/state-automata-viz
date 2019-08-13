@@ -31,7 +31,7 @@ var UndoManager;
  * @param {TMDocument} document The document to load from and save to.
  */
 function TMDocumentController(containers, buttons, document) {
-  this.simulator = new TMSimulator(containers.simulator, buttons.simulator);
+  this.simulator = new TMSimulator(containers.simulator, buttons.simulator, containers.simulatorAlerts);
 
   // running in embedded mode
   if (!containers.editor) {

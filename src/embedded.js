@@ -104,13 +104,12 @@ window.vizAutomaton = function (root, doc) {
 
     return new TMDocumentController({
       simulator: getId('machine-container'),
-      editorAlerts: getId('editor-alerts-container'),
+      simulatorAlerts: document.getElementById('simulator-alerts-container')
     }, {
       simulator: {
         run: getButton(sim, 'run'),
         step: getButton(sim, 'step'),
-        reset: getButton(sim, 'reset'),
-        simulatorAlerts: getId('simulator-alerts-container')
+        reset: getButton(sim, 'reset')
       }
     }, doc);
   }());
