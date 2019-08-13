@@ -9,6 +9,8 @@ var YAMLException = parser.YAMLException;
 var ace;
 var UndoManager;
 
+require('./buttons.css');
+
 /**
  * For editing and displaying a TMDocument.
  * The controller coordinates the interactions between
