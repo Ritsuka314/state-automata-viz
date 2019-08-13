@@ -288,7 +288,7 @@ var controller = (function () {
   }
   var editor = document.getElementById('editor-container');
   // button containers
-  var sim = document.getElementById('controls-container');
+  var controller = document.getElementById('controls-container');
   var ed = editor.parentNode;
 
   return new TMDocumentController({
@@ -297,10 +297,10 @@ var controller = (function () {
     editorAlerts: document.getElementById('editor-alerts-container'),
     editor: editor
   }, {
-    simulator: {
-      run: getButton(sim, 'run'),
-      step: getButton(sim, 'step'),
-      reset: getButton(sim, 'reset')
+    controller: {
+      run: getButton(controller, 'run'),
+      step: getButton(controller, 'step'),
+      reset: getButton(controller, 'reset')
     },
     editor: {
       load: getButton(ed, 'editor-load'),

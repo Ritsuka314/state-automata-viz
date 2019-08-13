@@ -99,17 +99,18 @@ window.vizAutomaton = function (root, doc) {
     function getButton(container, type) {
       return container.querySelector('button.tm-' + type);
     }
+
     // button containers
-    var sim = getId('controls-container');
+    var controller = getId('controls-container');
 
     return new TMDocumentController({
       simulator: getId('machine-container'),
       simulatorAlerts: document.getElementById('simulator-alerts-container')
     }, {
-      simulator: {
-        run: getButton(sim, 'run'),
-        step: getButton(sim, 'step'),
-        reset: getButton(sim, 'reset')
+      controller: {
+        run: getButton(controller, 'run'),
+        step: getButton(controller, 'step'),
+        reset: getButton(controller, 'reset')
       }
     }, doc);
   }());
