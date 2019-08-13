@@ -106,91 +106,94 @@ function TMViz(div, spec, posTable) {
     this.step = () => {};
     this.reset = () => {};
   }
-
-  this.edgeAnimation = pulseEdge;
-  this.stepInterval = 100;
-
-  var self = this;
-  // lock: collection of edges
-  // only last edge taken in step can continue next step in running mode
-  var transitionsTaking = [];
-  // We hook into the animation callback to know when to start the next step (when running).
-  function animateAndContinue(edge) {
-    var transition = self.edgeAnimation(edge);
-    if (self.isRunning) {
-      // lock
-      transitionsTaking = _.union(transitionsTaking, [edge]);
-      
-      transition.transition().duration(self.stepInterval).each('end', function () {
-        // unlock
-        transitionsTaking = _.without(transitionsTaking, [edge]);
-        
-        // stop if machine was paused during the animation
-        if (self.isRunning && transitionsTaking.length === 0) { self.step(); }
-      });
-    }
-  }
-
-  if (spec.type === "fsa")
-    this.machine = new FSA(
-      animatedTransition(graph, animateAndContinue),
-      spec.startStates,
-      spec.acceptStates,
-      spec.epsilonTransition,
-      addBoundedTape(div, spec)
-    );
-  else if (spec.type === "pda")
-    this.machine = new PDA(
-      animatedTransition(graph, animateAndContinue),
-      spec.startStates,
-      spec.acceptStates,
-      addBoundedTape(div, spec),
-      addStack(div)
-    );
-  else if (spec.type === "tm")
-    this.machine = new TuringMachine(
-      animatedTransition(graph, animateAndContinue),
-      spec.startStates,
-      spec.acceptStates,
-      addTape(div, spec)
-    );
-  // intercept and animate when the state is set
-  watchInit(this.machine, 'states', function (prop, oldstate, newstate) {
-    if (oldstate instanceof Array)
-      _.each((oldstate) =>
-        d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false),
-        oldstate);
-    else
-      d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false);
+  else {
+    // no need to to these if not simulatable
     
-    if (newstate instanceof Array)
-      _.each((newstate) =>
-        d3.select(graph.getVertex(newstate).domNode).classed('current-state', true),
-        newstate);
-    else
-      d3.select(graph.getVertex(newstate).domNode).classed('current-state', true);
-    
-    return newstate;
-  });
+    this.edgeAnimation = pulseEdge;
+    this.stepInterval = 100;
 
-  // Sidenote: each "Step" click evaluates the transition function once.
-  // Therefore, detecting halting always requires its own step (for consistency).
-  this.isHalted = false;
+    var self = this;
+    // lock: collection of edges
+    // only last edge taken in step can continue next step in running mode
+    var transitionsTaking = [];
+    // We hook into the animation callback to know when to start the next step (when running).
+    function animateAndContinue(edge) {
+      var transition = self.edgeAnimation(edge);
+      if (self.isRunning) {
+        // lock
+        transitionsTaking = _.union(transitionsTaking, [edge]);
 
-  var isRunning = false;
-  /**
-   * Set isRunning to true to run the machine, and false to stop it.
-   */
-  Object.defineProperty(this, 'isRunning', {
-    configurable: true,
-    get: function () { return isRunning; },
-    set: function (value) {
-      if (isRunning !== value) {
-        isRunning = value;
-        if (isRunning) { this.step(); }
+        transition.transition().duration(self.stepInterval).each('end', function () {
+          // unlock
+          transitionsTaking = _.without(transitionsTaking, [edge]);
+
+          // stop if machine was paused during the animation
+          if (self.isRunning && transitionsTaking.length === 0) { self.step(); }
+        });
       }
     }
-  });
+
+    if (spec.type === "fsa")
+      this.machine = new FSA(
+        animatedTransition(graph, animateAndContinue),
+        spec.startStates,
+        spec.acceptStates,
+        spec.epsilonTransition,
+        addBoundedTape(div, spec)
+      );
+    else if (spec.type === "pda")
+      this.machine = new PDA(
+        animatedTransition(graph, animateAndContinue),
+        spec.startStates,
+        spec.acceptStates,
+        addBoundedTape(div, spec),
+        addStack(div)
+      );
+    else if (spec.type === "tm")
+      this.machine = new TuringMachine(
+        animatedTransition(graph, animateAndContinue),
+        spec.startStates,
+        spec.acceptStates,
+        addTape(div, spec)
+      );
+    // intercept and animate when the state is set
+    watchInit(this.machine, 'states', function (prop, oldstate, newstate) {
+      if (oldstate instanceof Array)
+        _.each((oldstate) =>
+          d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false),
+          oldstate);
+      else
+        d3.select(graph.getVertex(oldstate).domNode).classed('current-state', false);
+
+      if (newstate instanceof Array)
+        _.each((newstate) =>
+          d3.select(graph.getVertex(newstate).domNode).classed('current-state', true),
+          newstate);
+      else
+        d3.select(graph.getVertex(newstate).domNode).classed('current-state', true);
+
+      return newstate;
+    });
+
+    // Sidenote: each "Step" click evaluates the transition function once.
+    // Therefore, detecting halting always requires its own step (for consistency).
+    this.isHalted = false;
+
+    var isRunning = false;
+    /**
+     * Set isRunning to true to run the machine, and false to stop it.
+     */
+    Object.defineProperty(this, 'isRunning', {
+      configurable: true,
+      get: function () { return isRunning; },
+      set: function (value) {
+        if (isRunning !== value) {
+          isRunning = value;
+          if (isRunning) { this.step(); }
+        }
+      }
+    });
+  }
 
   this.error = null;
   this.__parentDiv = div;
