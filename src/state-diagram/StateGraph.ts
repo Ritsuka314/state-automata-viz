@@ -94,7 +94,7 @@ function labelFor_FSA(trans: FSATransition): string {
 }
 
 function labelFor_PDA(trans: PDATransition): string {
-  return trans.read + ', ' + JSON.stringify(trans.pop) + '↦' + JSON.stringify(trans.push);
+  return trans.read + ', [' + trans.pop.join(',') + '] ↦ [' + trans.push.join(',') + ']';
 }
 
 function labelFor_Tape(trans: TMTransition): string {
