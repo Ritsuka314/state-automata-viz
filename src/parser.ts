@@ -69,8 +69,6 @@ export type FSATransitionTable = TransitionTable<FSATransition>;
 export type PDATransitionTable = TransitionTable<PDATransition>;
 export type TMTransitionTable = TransitionTable<TMTransition>;
 
-// type Synonyms<T> = {[id: string]: T[]};
-
 @ValidatorConstraint()
 class StatesDeclared implements ValidatorConstraintInterface{
   validate(states, args: ValidationArguments) {
@@ -236,42 +234,34 @@ function parseTable<T extends Transition>(table, parser: TransitionParser<T>): T
     .value();
 }
 
-enum Pass {
-  Type, Synonyms, Transition
-}
-
-let passes: (keyof typeof Pass)[] = ["Type", "Synonyms", "Transition"];
-
-type Synonyms<T extends Transition>  = {[name: string]: T};
-
 @Exclude()
 export class AutomatonSpec {
-  @Expose({ name: "start states", groups: ['Type'] as typeof passes })
+  @Expose({ name: "start states" })
   @Transform(toStringArray)
   @Validate(StatesDeclared, {
     message: "All start states must be declared"
   })
   startStates: string[];
 
-  @Expose({ name: "accept states", groups: ['Type'] as typeof passes })
+  @Expose({ name: "accept states" })
   @Transform(toStringArray)
   @Validate(StatesDeclared, {
     message: "All accept states must be declared"
   })
   acceptStates: string[];
 
-  @Expose({ groups: ['Type'] as typeof passes })
+  @Expose()
   @Transform(splitToStringArray)
   input: string[];
 
-  @Expose({ groups: ['Type'] as typeof passes })
+  @Expose()
   @Transform(makeType)
   @IsIn(automatonTypes, {
     message: 'Automaton must be of type ' + JSON.stringify(automatonTypes)
   })
   type: string;
 
-  @Expose({ groups: ['Synonyms'] as typeof passes })
+  @Expose()
   @Transform((val) =>
     _.isNil(val) ? '' : String(val)
   )
@@ -279,12 +269,12 @@ export class AutomatonSpec {
     message: "input string cannot contain the epsilon symbol"})
   epsilon: string;
 
-  @Expose({ groups: ['Synonyms'] as typeof passes })
+  @Expose()
   @ValidateIf(o => o.type === "tm")
   @IsDefined()
   blank: string;
 
-  @Expose({ groups: ['Synonyms'] as typeof passes })
+  @Expose()
   @Transform((val, obj) =>
     obj.type === "tm" ?
       _.isNil(val) ? 1 : Number(val) :
@@ -292,15 +282,10 @@ export class AutomatonSpec {
   )
   nTape: number;
 
-  @Expose({groups: ['pass 2']})
-  @Transform((val, obj, type) =>
-    _.chain(val)
-    .mapKeys((val, key) => String(key))
-    // TODO
-  )
-  synonyms: Synonyms<FSATransition> | Synonyms<PDATransition> | Synonyms<TMTransition>;
+  // impossible to do
+  // synonyms: Synonyms<FSATransition> | Synonyms<PDATransition> | Synonyms<TMTransition>;
 
-  @Expose({ groups: ['Transition'] as typeof passes })
+  @Expose()
   @Transform((val, obj, type) => {
     console.log(val, obj, type);
     return parseTable(val, getParser(makeType(obj.type)));
@@ -413,14 +398,8 @@ export function parseSpec(str: string): AutomatonSpec {
   if (obj == null) obj = {};
   console.log(util.inspect(obj, false, null, true));
 
-  console.log('pass:', passes[0]);
-  let spec: AutomatonSpec = plainToClass(AutomatonSpec, obj, {groups: [passes[0]]});
+  let spec: AutomatonSpec = plainToClass(AutomatonSpec, obj);
   console.log(util.inspect(spec, false, null, true));
-  for (let pass of passes.slice(1)) {
-    console.log('pass:', pass);
-    spec = plainToClassFromExist(spec, obj, {groups: [pass]});
-    console.log(util.inspect(spec, false, null, true));
-  }
 
   spec.checkSimilatable();
   console.log(util.inspect(spec, false, null, true));
