@@ -3,7 +3,7 @@
 import * as jsyaml from "js-yaml";
 export { YAMLException } from "js-yaml";
 
-import {Exclude, Expose, plainToClass, Transform} from "class-transformer";
+import {Exclude, Expose, plainToClass, plainToClassFromExist, Transform} from "class-transformer";
 import "reflect-metadata";
 
 //import * as _ from 'lodash';
@@ -236,34 +236,42 @@ function parseTable<T extends Transition>(table, parser: TransitionParser<T>): T
     .value();
 }
 
+enum Pass {
+  Type, Synonyms, Transition
+}
+
+let passes: (keyof typeof Pass)[] = ["Type", "Synonyms", "Transition"];
+
+type Synonyms<T extends Transition>  = {[name: string]: T};
+
 @Exclude()
 export class AutomatonSpec {
-  @Expose({ name: "start states" })
+  @Expose({ name: "start states", groups: ['Type'] as typeof passes })
   @Transform(toStringArray)
   @Validate(StatesDeclared, {
     message: "All start states must be declared"
   })
   startStates: string[];
 
-  @Expose({ name: "accept states" })
+  @Expose({ name: "accept states", groups: ['Type'] as typeof passes })
   @Transform(toStringArray)
   @Validate(StatesDeclared, {
     message: "All accept states must be declared"
   })
   acceptStates: string[];
 
-  @Expose()
+  @Expose({ groups: ['Type'] as typeof passes })
   @Transform(splitToStringArray)
   input: string[];
 
-  @Expose()
+  @Expose({ groups: ['Type'] as typeof passes })
   @Transform(makeType)
   @IsIn(automatonTypes, {
     message: 'Automaton must be of type ' + JSON.stringify(automatonTypes)
   })
   type: string;
 
-  @Expose()
+  @Expose({ groups: ['Synonyms'] as typeof passes })
   @Transform((val) =>
     _.isNil(val) ? '' : String(val)
   )
@@ -271,12 +279,28 @@ export class AutomatonSpec {
     message: "input string cannot contain the epsilon symbol"})
   epsilon: string;
 
-  @Expose()
+  @Expose({ groups: ['Synonyms'] as typeof passes })
   @ValidateIf(o => o.type === "tm")
   @IsDefined()
   blank: string;
 
-  @Expose()
+  @Expose({ groups: ['Synonyms'] as typeof passes })
+  @Transform((val, obj) =>
+    obj.type === "tm" ?
+      _.isNil(val) ? 1 : Number(val) :
+      undefined
+  )
+  nTape: number;
+
+  @Expose({groups: ['pass 2']})
+  @Transform((val, obj, type) =>
+    _.chain(val)
+    .mapKeys((val, key) => String(key))
+    // TODO
+  )
+  synonyms: Synonyms<FSATransition> | Synonyms<PDATransition> | Synonyms<TMTransition>;
+
+  @Expose({ groups: ['Transition'] as typeof passes })
   @Transform((val, obj, type) => {
     console.log(val, obj, type);
     return parseTable(val, getParser(makeType(obj.type)));
@@ -389,7 +413,15 @@ export function parseSpec(str: string): AutomatonSpec {
   if (obj == null) obj = {};
   console.log(util.inspect(obj, false, null, true));
 
-  let spec: AutomatonSpec = plainToClass(AutomatonSpec, obj);
+  console.log('pass:', passes[0]);
+  let spec: AutomatonSpec = plainToClass(AutomatonSpec, obj, {groups: [passes[0]]});
+  console.log(util.inspect(spec, false, null, true));
+  for (let pass of passes.slice(1)) {
+    console.log('pass:', pass);
+    spec = plainToClassFromExist(spec, obj, {groups: [pass]});
+    console.log(util.inspect(spec, false, null, true));
+  }
+
   spec.checkSimilatable();
   console.log(util.inspect(spec, false, null, true));
 
