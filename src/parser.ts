@@ -8,7 +8,7 @@ import "reflect-metadata";
 
 //import * as _ from 'lodash';
 import _ from './lodash-mixins';
-//let __ = _;
+let __ = _;
 
 import { validateSync, IsIn, ValidateIf, IsDefined, ValidatorConstraintInterface, ValidationArguments, Validate, ValidatorConstraint } from "class-validator";
 
@@ -112,6 +112,130 @@ class EpsilonNotInInput implements ValidatorConstraintInterface{
   }
 }
 
+type TransitionParser<T extends Transition> =
+  (from: string, symbol: string, trans) => T[];
+
+const FSATransitionParser: TransitionParser<FSATransition> =
+  function (from, symbol, trans) {
+    return __
+      .castArray(trans || from)
+      .map(String)
+      .map((state): FSATransition =>
+          ({
+            from: from,
+            read: symbol,
+            to: state
+          })
+      )
+  };
+
+const PDATransitioParser: TransitionParser<PDATransition> =
+  function (from, symbol, trans) {
+    return __
+      .chain(trans || {})
+      .castArray()
+      .flatMap((trans): PDATransition[] =>
+        __
+          .chain(toStringArray(trans.state))
+          .unionWith(
+            toStringArray(trans.states),
+            _.isEqual
+          )
+          .unionWith(
+            _.difference(
+              toStringArray(Object.keys(trans)),
+              ["pop", "push", "state", "states"]
+            ),
+            _.isEqual
+          )
+          .map(String)
+          .thru((states) => _.isEmpty(states) ? [from] : states)
+          .map((to) =>
+            ({
+              from: from,
+              read: symbol,
+              pop: _.castArray(trans.pop || []).map(String),
+              push: _.castArray(trans.push || []).map(String),
+              to: to
+            }))
+          .value()
+      )
+      .value()
+  };
+
+const TMTransitionParser: TransitionParser<TMTransition> =
+  function (from, symbol, trans) {
+    return __
+      .castArray(trans || {})
+      .map((trans) => _.isString(trans) ? {move: trans} : trans)
+      .map((trans): TMTransition => {
+        console.log('trans:', util.inspect(trans));
+
+        let tos = _.chain(trans).at(['state', 'L', 'R', 'S']).flatten().filter(_.identity).value();
+        console.log('to[]:', util.inspect(tos));
+        if (tos.length > 1)
+          throw new TMSpecError('Ambiguous spec: can only specify one destination state per transition', {
+            problemValue: trans
+          });
+        let to = tos[0] || from;
+
+        let moves = _.chain(trans).keys().intersection(['L', 'R', 'S']).value();
+        console.log('move[]:', util.inspect(moves));
+        if (moves.length > 1)
+          throw new TMSpecError('Ambiguous spec: can only specify one move direction per transition', {
+            problemValue: trans
+          });
+        let move = moves[0]  || trans.move as string || 'S';
+        console.log('move:', move);
+        if (!_.contains(['L', 'R', 'S'], move))
+          throw new TMSpecError('Illegal move', {
+            problemValue: trans
+          });
+
+        return {
+          from: from,
+          read: symbol,
+          to: String(to),
+          write: String(trans.write || symbol),
+          move: String(move)
+        };
+      })
+  };
+
+function getParser<T extends Transition>(type: string): TransitionParser<T> {
+  return match(makeType(type))
+    .on(_.matches('fsa'), () =>
+      FSATransitionParser
+    )
+    .on(_.matches('pda'), () =>
+      PDATransitioParser
+    )
+    .otherwise(/*_.matches('tm'), */() =>
+      TMTransitionParser
+    )
+}
+
+function parseTable<T extends Transition>(table, parser: TransitionParser<T>): TransitionTable<T> {
+  return __
+    .chain(table)
+    .mapKeys((val, key) => String(key))
+    .mapValues((outTrans, from) =>
+      __.chain(outTrans)
+        .toPairs()
+        .flatMap(_.spread((symbols, trans) =>
+          __.castArray(String(symbols).split(","))
+            .map((symbol) => ({
+              [symbol]: parser(from, symbol, trans)
+            }))
+        ))
+        .thru((all) =>
+          _.spread(_.merge)(all)
+        )
+        .value()
+    )
+    .value();
+}
+
 @Exclude()
 export class AutomatonSpec {
   @Expose({ name: "start states" })
@@ -155,101 +279,7 @@ export class AutomatonSpec {
   @Expose()
   @Transform((val, obj, type) => {
     console.log(val, obj, type);
-    return _.chain(val)
-    .mapKeys((val, key) => String(key))
-    .mapValues((outTrans, from) =>
-      _.chain(outTrans)
-       .toPairs()
-       .flatMap(_.spread((symbols, trans) =>
-         _.castArray(String(symbols).split(","))
-          .map((symbol) => ({
-            [symbol]:
-              match(makeType(obj.type))
-              .on(_.matches('fsa'), () =>
-                _.castArray(trans || from)
-                .map(String)
-                .map((state): FSATransition =>
-                  ({
-                    from: from,
-                    read: symbol,
-                    to: state
-                  })
-                )
-              )
-              .on(_.matches('pda'), () =>
-                _.chain(trans || {})
-                .castArray()
-                .flatMap((trans): PDATransition[] =>
-                  _
-                  .chain(toStringArray(trans.state))
-                  .unionWith(
-                    toStringArray(trans.states),
-                    _.isEqual
-                  )
-                  .unionWith(
-                    _.difference(
-                      toStringArray(Object.keys(trans)),
-                      ["pop", "push", "state", "states"]
-                    ),
-                    _.isEqual
-                  )
-                  .map(String)
-                  .thru((states) => _.isEmpty(states) ? [from] : states)
-                  .map((to) =>
-                    ({
-                      from: from,
-                      read: symbol,
-                      pop: _.castArray(trans.pop || []).map(String),
-                      push: _.castArray(trans.push || []).map(String),
-                      to: to
-                    }))
-                  .value()
-                )
-                .value()
-              )
-              .otherwise(/*_.matches('tm'), */() =>
-                _.castArray(trans || {})
-                .map((trans) => _.isString(trans) ? {move: trans} : trans)
-                .map((trans): TMTransition => {
-                  console.log('trans:', util.inspect(trans));
-
-                  let tos = _.chain(trans).at(['state', 'L', 'R', 'S']).flatten().filter(_.identity).value();
-                  console.log('to[]:', util.inspect(tos));
-                  if (tos.length > 1)
-                    throw new TMSpecError('Ambiguous spec: can only specify one destination state per transition', {
-                      problemValue: trans
-                    });
-                  let to = tos[0] || from;
-
-                  let moves = _.chain(trans).keys().intersection(['L', 'R', 'S']).value();
-                  console.log('move[]:', util.inspect(moves));
-                  if (moves.length > 1)
-                    throw new TMSpecError('Ambiguous spec: can only specify one move direction per transition', {
-                      problemValue: trans
-                    });
-                  let move = moves[0]  || trans.move as string || 'S';
-                  if (!_.contains(['L', 'R', 'S'], move))
-                    throw new TMSpecError('Illegal move', {
-                      problemValue: trans
-                    });
-
-                  return {
-                    from: from,
-                    read: symbol,
-                    to: String(to),
-                    write: String(trans.write || symbol),
-                    move: String(move)
-                  };
-                })
-              )
-          }))
-       ))
-       .thru((all) =>
-         _.spread(_.merge)(all)
-       )
-       .value()
-    )
-    .value();
+    return parseTable(val, getParser(makeType(obj.type)));
   })
   @Validate(AllStatesDeclared, {
     message: "All states must be declared"
