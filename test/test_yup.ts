@@ -1,12 +1,12 @@
 'use strict';
 
 let assert = require('assert');
-import { parseSpec } from '../src/parser';
+import { parseSpec } from '../src/parser-yup';
 import { stripIndent } from 'common-tags';
 import _ from "../src/lodash-mixins";
 import { list } from '../src/examples.js';
 
-describe('parser - class transformer', function() {
+describe('parser - yup', function() {
   describe('parse', function() {
     describe('type', function() {
       it('legal', function () {
@@ -40,15 +40,8 @@ describe('parser - class transformer', function() {
           `;
 
         assert.throws(() => parseSpec(str), _.conforms({
-            name: _.partial(_.isEqual, 'TMSpecError'),
-            reason: _.partial(_.isEqual, 'Validation Error'),
-            details: _.conforms({
-              validationErrors: (lst) => _.find(lst, _.conforms({
-                constraints: _.conforms({
-                  isIn: _.partial(_.isEqual, 'Automaton must be of type ["fsa","pda","tm"]')
-                })
-              }))
-            })
+            name: _.partial(_.isEqual, 'ValidationError'),
+            message: _.partial(_.isEqual, 'Automaton must be of type ["fsa","pda","tm"]')
           })
         );
       });
@@ -77,7 +70,7 @@ describe('parser - class transformer', function() {
           type: fsa
           table:
             abc:
-            "": 
+            "":
           `;
           let spec = parseSpec(str);
           assert.deepStrictEqual(spec.startStates, ['abc']);
@@ -91,7 +84,7 @@ describe('parser - class transformer', function() {
           type: fsa
           table:
             1:
-            'true': 
+            'true':
           `;
           let spec = parseSpec(str);
           assert.deepStrictEqual(spec.startStates, ['1']);
@@ -100,7 +93,7 @@ describe('parser - class transformer', function() {
 
         it('null', function () {
           let str = stripIndent`
-          start states: 
+          start states:
           type: fsa
           `;
           let spec = parseSpec(str);
@@ -147,7 +140,7 @@ describe('parser - class transformer', function() {
 
         it('null', function () {
           let str = stripIndent`
-          input: 
+          input:
           type: fsa
           `;
           let spec = parseSpec(str);
@@ -213,8 +206,8 @@ describe('parser - class transformer', function() {
           assert.deepStrictEqual(spec.table, {
             'A': {
               '0': [{ from: 'A', read: '0', to: 'A' },
-                    { from: 'A', read: '0', to: 'B' }]
-              },
+                { from: 'A', read: '0', to: 'B' }]
+            },
             B: {}
           });
         });
@@ -244,15 +237,8 @@ describe('parser - class transformer', function() {
             `;
 
           assert.throws(() => parseSpec(str), _.conforms({
-              name: _.partial(_.isEqual, 'TMSpecError'),
-              reason: _.partial(_.isEqual, 'Validation Error'),
-              details: _.conforms({
-                validationErrors: (lst) => _.find(lst, _.conforms({
-                  constraints: _.conforms({
-                    StatesDeclared: _.partial(_.isEqual, 'All start states must be declared')
-                  })
-                }))
-              })
+              name: _.partial(_.isEqual, 'ValidationError'),
+              message: _.partial(_.isEqual, 'all start states must be declared'),
             })
           );
         });
@@ -266,15 +252,8 @@ describe('parser - class transformer', function() {
             `;
 
           assert.throws(() => parseSpec(str), _.conforms({
-              name: _.partial(_.isEqual, 'TMSpecError'),
-              reason: _.partial(_.isEqual, 'Validation Error'),
-              details: _.conforms({
-                validationErrors: (lst) => _.find(lst, _.conforms({
-                  constraints: _.conforms({
-                    AllStatesInTransitionTableDeclared: _.partial(_.isEqual, 'All states must be declared')
-                  })
-                }))
-              })
+              name: _.partial(_.isEqual, 'ValidationError'),
+              message: _.partial(_.isEqual, 'all states must be declared'),
             })
           );
         });
@@ -320,15 +299,8 @@ describe('parser - class transformer', function() {
             `;
 
           assert.throws(() => parseSpec(str), _.conforms({
-              name: _.partial(_.isEqual, 'TMSpecError'),
-              reason: _.partial(_.isEqual, 'Validation Error'),
-              details: _.conforms({
-                validationErrors: (lst) => _.find(lst, _.conforms({
-                  constraints: _.conforms({
-                    EpsilonNotInInput: _.partial(_.isEqual, 'input string cannot contain the epsilon symbol')
-                  })
-                }))
-              })
+              name: _.partial(_.isEqual, 'ValidationError'),
+              message: _.partial(_.isEqual, 'input string cannot contain the epsilon symbol'),
             })
           );
         });
@@ -509,7 +481,7 @@ describe('parser - class transformer', function() {
           assert.deepStrictEqual(spec.table,    {
             A: {
               '0': [{ from: 'A', read: '0', push: [], pop: ['i'], to: 'A' },
-                    { from: 'A', read: '0', push: [], pop: [], to: 'A' }]
+                { from: 'A', read: '0', push: [], pop: [], to: 'A' }]
             }
           });
         });
@@ -570,264 +542,267 @@ describe('parser - class transformer', function() {
       });
     });
 
-    describe('TM', function() {
-      describe('blank', function() {
-        it('blank is undefined', function () {
-          let str = stripIndent`
-            type: tm
-            `;
+        describe('TM', function() {
+          describe('blank', function() {
+            it('blank is undefined', function () {
+              let str = stripIndent`
+                type: tm
+                `;
 
-          assert.throws(() => parseSpec(str), _.conforms({
-              name: _.partial(_.isEqual, 'TMSpecError'),
-              reason: _.partial(_.isEqual, 'Validation Error'),
-              details: _.conforms({
-                validationErrors: (lst) => _.find(lst, _.conforms({
-                  constraints: _.conforms({
-                    isDefined: _.partial(_.isEqual, 'blank should not be null or undefined')
+              assert.throws(() => parseSpec(str), _.conforms({
+                  name: _.partial(_.isEqual, 'ValidationError'),
+                  message: _.partial(_.isEqual, 'blank is a required field'),
+                })
+              );
+            });
+
+            it('blank is null', function () {
+              let str = stripIndent`
+                type: tm
+                blank:
+                `;
+
+              assert.throws(() => parseSpec(str), _.conforms({
+                name: _.partial(_.isEqual, 'ValidationError'),
+                message: _.partial(_.isEqual, 'blank must be a `string` type, but the final value was: `null`.\n' +
+                  ' If "null" is intended as an empty value be sure to mark the schema as `.nullable()`'),
+                })
+              );
+            });
+
+            it('legal', function () {
+              let str = stripIndent`
+                type: tm
+                blank: ' '
+                `;
+
+              let spec = parseSpec(str);
+              assert.strictEqual(spec.blank, ' ');
+            });
+          });
+
+          // TODO
+          // describe('number of tapes', function() {
+          //   it('number', function () {
+          //     let str = stripIndent`
+          //     type: tm
+          //     blank: ' '
+          //     nTape: 2
+          //     `;
+          //
+          //     let spec = parseSpec(str);
+          //     console.log(spec);
+          //     assert(false);
+          //   });
+          //
+          // });
+
+          describe('transition table', function() {
+            it('regular', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  0: {write: '1', move: 'L', state: A}
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  '0': [{ from: 'A', read: '0', write: '1', move: 'L', to: 'A' }]
+                }
+              });
+            });
+
+            it('null transition', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  0:
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  '0': [{ from: 'A', read: '0', write: '0', move: 'S', to: 'A' }]
+                }
+              });
+            });
+
+            it('state undefined', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  a: {write: b, move: 'L'}
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  'a': [{ from: 'A', read: 'a', write: 'b', move: 'L', to: 'A' }]
+                }
+              });
+            });
+
+            it('state null', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  a: {write: b, move: L, state:}
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  'a': [{ from: 'A', read: 'a', write: 'b', move: 'L', to: 'A' }]
+                }
+              });
+            });
+
+            it('non string state', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                1:
+                  a: {write: 'b', move: L, state: 2}
+                2:
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                '1': {
+                  'a': [{ from: '1', read: 'a', write: 'b', move: 'L', to: '2' }]
+                },
+                '2': {}
+              });
+            });
+
+            it('write undefined', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  a: {move: L, state: A}
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  'a': [{ from: 'A', read: 'a', write: 'a', move: 'L', to: 'A' }]
+                }
+              });
+            });
+
+            it('write null', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  a: {write: , move: L, state: A}
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  'a': [{ from: 'A', read: 'a', write: 'a', move: 'L', to: 'A' }]
+                }
+              });
+            });
+
+            it('move undefined', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  a: {write: , state: A}
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  'a': [{ from: 'A', read: 'a', write: 'a', move: 'S', to: 'A' }]
+                }
+              });
+            });
+
+            it('move null', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  a: {write: , move: , state: A}
+              `;
+
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  'a': [{ from: 'A', read: 'a', write: 'a', move: 'S', to: 'A' }]
+                }
+              });
+            });
+
+            it('illegal move', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  a: {write: , move: P, state: A}
+              `;
+
+              assert.throws(() => parseSpec(str),    _.conforms({
+                name: _.equalsTo('TMSpecError'),
+                details: _.conforms({
+                  problemValue: _.conforms({
+                    move: _.equalsTo('P')
                   })
-                }))
-              })
-            })
-          );
-        });
+                })
+              }));
+            });
 
-        it('blank is null', function () {
-          let str = stripIndent`
-            type: tm
-            blank:
-            `;
+            it('multiple', function () {
+              let str = stripIndent`
+              type: tm
+              blank: ' '
+              table:
+                A:
+                  a: [{write: b, move: L, state: B}, {write: c, move: R, state: C}]
+                B:
+                C:
+              `;
 
-          assert.throws(() => parseSpec(str), _.conforms({
-              name: _.partial(_.isEqual, 'TMSpecError'),
-              reason: _.partial(_.isEqual, 'Validation Error'),
-              details: _.conforms({
-                validationErrors: (lst) => _.find(lst, _.conforms({
-                  constraints: _.conforms({
-                    isDefined: _.partial(_.isEqual, 'blank should not be null or undefined')
-                  })
-                }))
-              })
-            })
-          );
-        });
-
-        it('legal', function () {
-          let str = stripIndent`
-            type: tm
-            blank: ' '
-            `;
-
-          let spec = parseSpec(str);
-          assert.strictEqual(spec.blank, ' ');
-        });
-      });
-
-      describe('transition table', function() {
-        it('regular', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              0: {write: '1', move: 'L', state: A}
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              '0': [{ from: 'A', read: '0', write: '1', move: 'L', to: 'A' }]
-            }
-          });
-        });
-
-        it('null transition', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              0:
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              '0': [{ from: 'A', read: '0', write: '0', move: 'S', to: 'A' }]
-            }
-          });
-        });
-
-        it('state undefined', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              a: {write: b, move: 'L'}
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              'a': [{ from: 'A', read: 'a', write: 'b', move: 'L', to: 'A' }]
-            }
-          });
-        });
-
-        it('state null', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              a: {write: b, move: L, state:}
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              'a': [{ from: 'A', read: 'a', write: 'b', move: 'L', to: 'A' }]
-            }
-          });
-        });
-
-        it('non string state', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            1:
-              a: {write: 'b', move: L, state: 2}
-            2:
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            '1': {
-              'a': [{ from: '1', read: 'a', write: 'b', move: 'L', to: '2' }]
-            },
-            '2': {}
-          });
-        });
-
-        it('write undefined', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              a: {move: L, state: A}
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              'a': [{ from: 'A', read: 'a', write: 'a', move: 'L', to: 'A' }]
-            }
-          });
-        });
-
-        it('write null', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              a: {write: , move: L, state: A}
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              'a': [{ from: 'A', read: 'a', write: 'a', move: 'L', to: 'A' }]
-            }
-          });
-        });
-
-        it('move undefined', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              a: {write: , state: A}
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              'a': [{ from: 'A', read: 'a', write: 'a', move: 'S', to: 'A' }]
-            }
-          });
-        });
-
-        it('move null', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              a: {write: , move: , state: A}
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              'a': [{ from: 'A', read: 'a', write: 'a', move: 'S', to: 'A' }]
-            }
-          });
-        });
-
-        it('illegal move', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              a: {write: , move: P, state: A}
-          `;
-
-          assert.throws(() => parseSpec(str),    _.conforms({
-            name: _.equalsTo('TMSpecError'),
-            details: _.conforms({
-              problemValue: _.conforms({
-                move: _.equalsTo('P')
-              })
-            })
-          }));
-        });
-
-        it('multiple', function () {
-          let str = stripIndent`
-          type: tm
-          blank: ' '
-          table:
-            A:
-              a: [{write: b, move: L, state: B}, {write: c, move: R, state: C}]
-            B:
-            C:
-          `;
-
-          let spec = parseSpec(str);
-          assert.deepStrictEqual(spec.table,    {
-            A: {
-              'a': [{ from: 'A', read: 'a', write: 'b', move: 'L', to: 'B' },
+              let spec = parseSpec(str);
+              assert.deepStrictEqual(spec.table,    {
+                A: {
+                  'a': [{ from: 'A', read: 'a', write: 'b', move: 'L', to: 'B' },
                     { from: 'A', read: 'a', write: 'c', move: 'R', to: 'C' }]
-            },
-            B: {},
-            C: {}
+                },
+                B: {},
+                C: {}
+              });
+            });
           });
         });
-      });
-    });
 
-    describe('Examples', function() {
-      for (let doc of list) {
-        it(doc.id, () => {
-          console.log(doc);
-          assert.doesNotThrow(() => parseSpec(doc.sourceCode));
-        })
-      }
-    });
+        describe('Examples', function() {
+          for (let doc of list) {
+            it(doc.id, () => {
+              console.log(doc);
+              assert.doesNotThrow(() => parseSpec(doc.sourceCode));
+            })
+          }
+        });
   });
 });
