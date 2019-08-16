@@ -42,8 +42,8 @@ function makeType (type): string{
 }
 
 const matched = (x) => ({
-    on: () => matched(x),
-    otherwise: () => x,
+  on: () => matched(x),
+  otherwise: () => x,
 });
 
 const match = (x) => ({
@@ -53,7 +53,7 @@ const match = (x) => ({
 
 function isPrefix(arr1, arr2) {
   return _.isEqual(arr1, _.take(arr2, arr1.length)) ||
-         _.isEqual(arr2, _.take(arr1, arr2.length));
+    _.isEqual(arr2, _.take(arr1, arr2.length));
 }
 
 let automatonTypes = ['fsa', 'pda', 'tm'];
@@ -81,24 +81,22 @@ class StatesDeclared implements ValidatorConstraintInterface{
 class AllStatesDeclared implements ValidatorConstraintInterface{
   validate(table, args: ValidationArguments) {
     return _.chain(table)
-    .values()
-    .flatMap(stateObject =>
-      _
-      .chain(stateObject)
       .values()
-      .flatten()
-      .map(transition => transition.to)
-      .value()
-    )
-    .every(state =>
-      _
-      .chain(table)
-      .keys()
-      .tap(console.log)
-      .includes(state)
-      .value()
-    )
-    .value();
+      .flatMap(stateObject =>
+        __.chain(stateObject)
+          .values()
+          .flatten()
+          .map(transition => transition.to)
+          .value()
+      )
+      .every(state =>
+        __.chain(table)
+          .keys()
+          .tap(console.log)
+          .includes(state)
+          .value()
+      )
+      .value();
   }
 }
 
@@ -119,22 +117,21 @@ const FSATransitionParser: TransitionParser<FSATransition> =
       .castArray(trans || from)
       .map(String)
       .map((state): FSATransition =>
-          ({
-            from: from,
-            read: symbol,
-            to: state
-          })
+        ({
+          from: from,
+          read: symbol,
+          to: state
+        })
       )
   };
 
-const PDATransitioParser: TransitionParser<PDATransition> =
+const PDATransitionParser: TransitionParser<PDATransition> =
   function (from, symbol, trans) {
     return __
       .chain(trans || {})
       .castArray()
       .flatMap((trans): PDATransition[] =>
-        __
-          .chain(toStringArray(trans.state))
+        __.chain(toStringArray(trans.state))
           .unionWith(
             toStringArray(trans.states),
             _.isEqual
@@ -200,13 +197,13 @@ const TMTransitionParser: TransitionParser<TMTransition> =
       })
   };
 
-function getParser<T extends Transition>(type: string): TransitionParser<T> {
+function getParser(type: string): TransitionParser<Transition> {
   return match(makeType(type))
     .on(_.matches('fsa'), () =>
       FSATransitionParser
     )
     .on(_.matches('pda'), () =>
-      PDATransitioParser
+      PDATransitionParser
     )
     .otherwise(/*_.matches('tm'), */() =>
       TMTransitionParser
@@ -287,7 +284,6 @@ export class AutomatonSpec {
 
   @Expose()
   @Transform((val, obj, type) => {
-    console.log(val, obj, type);
     return parseTable(val, getParser(makeType(obj.type)));
   })
   @Validate(AllStatesDeclared, {
@@ -297,7 +293,7 @@ export class AutomatonSpec {
 
   simulatable: boolean;
 
-  checkSimilatable() {
+  checkSimulatable() {
     switch (this.type) {
       case 'fsa':
         return this.simulatable = true;
@@ -305,46 +301,42 @@ export class AutomatonSpec {
         if (this.startStates.length > 1) return false;
 
         let rst =
-          _
-          .chain(<PDATransitionTable>this.table)
-          .mapValues((stateObj/*, state*/) =>
-              _
-              .chain(stateObj)
-              .values()
-              .flatten()
-              .thru((transs) =>
-                  _
-                  .chain(_.range(transs.length))
-                  .map(i =>
-                      _
-                      .chain(_.range(i + 1, transs.length))
-                      .map(j => {
-                        let trans1 = transs[i],
+          __.chain(<PDATransitionTable>this.table)
+            .mapValues((stateObj/*, state*/) =>
+              __.chain(stateObj)
+                .values()
+                .flatten()
+                .thru((transs) =>
+                  __.chain(_.range(transs.length))
+                    .map(i =>
+                      __.chain(_.range(i + 1, transs.length))
+                        .map(j => {
+                          let trans1 = transs[i],
                             trans2 = transs[j];
 
-                        // guaranteed not to be distinguishable by from-state
-                        let distinguishedByRead =
-                          (   (trans1.read !== trans2.read)
-                            && (trans1.read !== this.epsilon && trans2.read !== this.epsilon)
-                          ),
-                          distinguishedByPop = !isPrefix(trans1.pop, trans2.pop);
+                          // guaranteed not to be distinguishable by from-state
+                          let distinguishedByRead =
+                              (   (trans1.read !== trans2.read)
+                                && (trans1.read !== this.epsilon && trans2.read !== this.epsilon)
+                              ),
+                            distinguishedByPop = !isPrefix(trans1.pop, trans2.pop);
 
-                        if ((_.isEqual(trans1, trans2))
-                         || distinguishedByPop
-                         || distinguishedByRead) return null;
-                        else return [trans1, trans2];
-                      })
-                      .filter(item => _.isArray(item))
-                      .map(item => item as PDATransition[])
-                      .value()
-                  )
-                  .flatten()
-                  .value()
-              )
-              .value()
-          )
-          .pickBy(item => item.length)
-          .value();
+                          if ((_.isEqual(trans1, trans2))
+                            || distinguishedByPop
+                            || distinguishedByRead) return null;
+                          else return [trans1, trans2];
+                        })
+                        .filter(item => _.isArray(item))
+                        .map(item => item as PDATransition[])
+                        .value()
+                    )
+                    .flatten()
+                    .value()
+                )
+                .value()
+            )
+            .pickBy(item => item.length)
+            .value();
 
         let label = (trans: PDATransition) =>
           trans.from + '->' + trans.to + ': ' + trans.read + ', [' + trans.pop + '] ↦ [' + trans.push + ']';
@@ -353,7 +345,7 @@ export class AutomatonSpec {
         console.log("Non deterministic transition pairs in PDA:");
         _.forOwn(rst, (pairs/*, state*/) => {
           _(pairs)
-              .forEach(pair => console.log(pair2str(pair)));
+            .forEach(pair => console.log(pair2str(pair)));
         });
 
         return this.simulatable = _.isEmpty(rst);
@@ -362,20 +354,18 @@ export class AutomatonSpec {
         if (this.startStates.length > 1) return false;
 
         let rst =
-          _
-          .chain(<TMTransitionTable>this.table)
-          .mapValues((stateObj/*, state*/) =>
-            _
-            .chain(stateObj)
-            .mapValues((transs, symbol) =>
-              transs.length > 1 ? transs : null
+          __.chain(<TMTransitionTable>this.table)
+            .mapValues((stateObj/*, state*/) =>
+              __.chain(stateObj)
+                .mapValues((transs, symbol) =>
+                  transs.length > 1 ? transs : null
+                )
+                .values()
+                .filter(_.isArray)
+                .value()
             )
-            .values()
-            .filter(_.isArray)
-            .value()
-          )
-          .pickBy(item => item.length)
-          .value();
+            .pickBy(item => item.length)
+            .value();
 
         let label = (trans: TMTransition) =>
           trans.from + '->' + trans.to + ': ' + trans.read + '↦' + trans.write + ',' + trans.move;
@@ -384,7 +374,7 @@ export class AutomatonSpec {
         console.log("Non deterministic transition pairs in TM:");
         _.forOwn(rst, (groups/*, state*/) => {
           _(groups)
-          .forEach(group => console.log(group2str(group)));
+            .forEach(group => console.log(group2str(group)));
         });
 
         return this.simulatable = _.isEmpty(rst);
@@ -401,7 +391,7 @@ export function parseSpec(str: string): AutomatonSpec {
   let spec: AutomatonSpec = plainToClass(AutomatonSpec, obj);
   console.log(util.inspect(spec, false, null, true));
 
-  spec.checkSimilatable();
+  spec.checkSimulatable();
   console.log(util.inspect(spec, false, null, true));
 
   let es = validateSync(spec);
