@@ -4,8 +4,6 @@ import { stripIndent } from 'common-tags';
 import _ from "../src/lodash-mixins";
 import { list } from '../src/examples.js';
 
-import {Exclude, Expose, classToPlain, plainToClass} from "class-transformer";
-
 describe('Parser', function() {
   describe('parse', function() {
     describe('type', function() {
