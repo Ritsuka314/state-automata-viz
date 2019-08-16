@@ -1,7 +1,7 @@
 'use strict';
 
 import _ from './lodash-mixins';
-import { FSATransition } from './parser';
+import { FSATransition } from './TransitionSpec';
 import { TransitionLUT, StateAutomaton } from "./StateAutomaton";
 
 type FSATransitionLUT = TransitionLUT<FSATransition>;

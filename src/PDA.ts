@@ -2,7 +2,7 @@
 
 let TMRuntimeError = require("./tape/TMRuntimeError");
 import _ from './lodash-mixins';
-import { PDATransition } from './parser';
+import { PDATransition } from './TransitionSpec';
 import { TransitionLUT, StateAutomaton } from "./StateAutomaton";
 
 type PDATransitionLUT = TransitionLUT<PDATransition>;

@@ -1,4 +1,4 @@
-import { Transition } from "./parser";
+import { Transition } from "./TransitionSpec";
 
 export type TransitionLUT<T extends Transition> = (from: string, symbol: string) => T[];
 

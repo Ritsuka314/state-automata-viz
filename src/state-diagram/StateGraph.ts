@@ -1,7 +1,9 @@
 'use strict';
 
 import _ from '../lodash-mixins';
-import {FSATransition, PDATransition, TMTransition, Transition, TransitionTable} from '../parser';
+import {
+  FSATransition, PDATransition, TMTransition, Transition, TransitionTable
+} from '../TransitionSpec';
 
 interface Vertex<T extends Transition> extends SimulationNodeDatum {
   label: string,

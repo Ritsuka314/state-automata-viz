@@ -2,7 +2,7 @@
 
 let TMRuntimeError = require("./tape/TMRuntimeError");
 import _ from './lodash-mixins';
-import { TMTransition } from './parser';
+import { TMTransition } from './TransitionSpec';
 import { TransitionLUT, StateAutomaton } from "./StateAutomaton";
 
 type TMTransitionLUT = TransitionLUT<TMTransition>;
