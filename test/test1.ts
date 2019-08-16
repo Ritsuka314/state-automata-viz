@@ -1,7 +1,7 @@
 'use strict';
 
 let assert = require('assert');
-import { parseSpec } from '../src/parser';
+import { parseSpec } from '../src/parser-classTransformer';
 import { stripIndent } from 'common-tags';
 import _ from "../src/lodash-mixins";
 import { list } from '../src/examples.js';

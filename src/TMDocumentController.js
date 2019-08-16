@@ -1,6 +1,6 @@
 'use strict';
 var TMSimulator = require('./TMSimulator'),
-    parser = require('./parser.ts'),
+    parser = require('./parser-yup.ts'),
     util = require('./util'),
     d3 = require('d3'),
     watchInit = require('./watch').watchInit;
