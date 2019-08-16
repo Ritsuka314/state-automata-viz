@@ -1,8 +1,42 @@
+import * as yup from "yup";
+import { toStringArray } from "./parser-utils";
+
+export let StringArraySchema = (transformer) =>
+  yup
+    .mixed()
+    .default([])
+    // array.ensure is broken
+    .transform(transformer);
+
 export let automatonTypes = ['fsa', 'pda', 'tm'];
 
-export type FSATransition = {from: string, read: string, to: string}
-export type PDATransition = {from: string, read: string, push: string[], pop: string[], to: string}
-export type TMTransition = {from: string, read: string, write: string, move: string, to: string}
+export let FSATransitionSchema = yup.object({
+  from: yup.string(),
+  read: yup.string(),
+  to: yup.string(),
+});
+
+export type FSATransition = yup.InferType<typeof FSATransitionSchema>
+
+export let PDATransitionSchema = yup.object({
+  from: yup.string(),
+  read: yup.string(),
+  pop: StringArraySchema(toStringArray),
+  push: StringArraySchema(toStringArray),
+  to: yup.string(),
+});
+
+export type PDATransition = yup.InferType<typeof PDATransitionSchema>
+
+export let TMTransitionSchema = yup.object({
+  from: yup.string(),
+  read: yup.string(),
+  write: yup.string(),
+  move: yup.string(),
+  to: yup.string(),
+});
+
+export type TMTransition = yup.InferType<typeof TMTransitionSchema>
 export type Transition = FSATransition | PDATransition | TMTransition;
 
 export type TransitionTable<T extends Transition> = {[state: string] : {[symbol: string]: T[]}};

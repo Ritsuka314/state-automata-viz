@@ -14,12 +14,11 @@ import {
 
 import {Exclude, Expose, plainToClass, plainToClassFromExist, Transform} from "class-transformer";
 import "reflect-metadata";
+import { validateSync, IsIn, ValidateIf, IsDefined, ValidatorConstraintInterface, ValidationArguments, Validate, ValidatorConstraint } from "class-validator";
 
 //import * as _ from 'lodash';
 import _ from './lodash-mixins';
 let __ = _;
-
-import { validateSync, IsIn, ValidateIf, IsDefined, ValidatorConstraintInterface, ValidationArguments, Validate, ValidatorConstraint } from "class-validator";
 
 import * as util from "util";
 
