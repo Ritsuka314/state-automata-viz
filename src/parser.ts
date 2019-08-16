@@ -3,6 +3,15 @@
 import * as jsyaml from "js-yaml";
 export { YAMLException } from "js-yaml";
 
+import {
+  toStringArray,
+  splitToStringArray,
+  allStatesInTransitionTableDeclared,
+  checkSimulatable,
+  TransitionParser,
+  parseTable
+} from './parser-utils';
+
 import {Exclude, Expose, plainToClass, plainToClassFromExist, Transform} from "class-transformer";
 import "reflect-metadata";
 
@@ -23,26 +32,6 @@ import {
 import TMSpecError from './TMSpecError';
 export { TMSpecError };
 
-function toStringArray (val): string[] {
-  if (_.isNil(val))
-    return [];
-  if (_.isString(val))
-    return [val];
-  else
-    return _.castArray(val).map(String);
-}
-
-function splitToStringArray (val): string[] {
-  if (_.isNil(val))
-    return [];
-  if (_.isString(val))
-    return val.split("");
-  if (_.isArray(val))
-    return val.map(String);
-  else
-    return String(val).split("");
-}
-
 function makeType (type): string{
   return String(type || 'tm').toLowerCase();
 }
@@ -57,11 +46,6 @@ const match = (x) => ({
   otherwise: fn => fn(x),
 });
 
-function isPrefix(arr1, arr2) {
-  return _.isEqual(arr1, _.take(arr2, arr1.length)) ||
-    _.isEqual(arr2, _.take(arr1, arr2.length));
-}
-
 @ValidatorConstraint()
 class StatesDeclared implements ValidatorConstraintInterface{
   validate(states, args: ValidationArguments) {
@@ -71,26 +55,8 @@ class StatesDeclared implements ValidatorConstraintInterface{
 }
 
 @ValidatorConstraint()
-class AllStatesDeclared implements ValidatorConstraintInterface{
-  validate(table, args: ValidationArguments) {
-    return _.chain(table)
-      .values()
-      .flatMap(stateObject =>
-        __.chain(stateObject)
-          .values()
-          .flatten()
-          .map(transition => transition.to)
-          .value()
-      )
-      .every(state =>
-        __.chain(table)
-          .keys()
-          .tap(console.log)
-          .includes(state)
-          .value()
-      )
-      .value();
-  }
+class AllStatesInTransitionTableDeclared implements ValidatorConstraintInterface{
+  validate = allStatesInTransitionTableDeclared;
 }
 
 @ValidatorConstraint()
@@ -100,9 +66,6 @@ class EpsilonNotInInput implements ValidatorConstraintInterface{
     return !_.includes(input, epsilon);
   }
 }
-
-type TransitionParser<T extends Transition> =
-  (from: string, symbol: string, trans) => T[];
 
 const FSATransitionParser: TransitionParser<FSATransition> =
   function (from, symbol, trans) {
@@ -203,27 +166,6 @@ function getParser(type: string): TransitionParser<Transition> {
     )
 }
 
-function parseTable<T extends Transition>(table, parser: TransitionParser<T>): TransitionTable<T> {
-  return __
-    .chain(table)
-    .mapKeys((val, key) => String(key))
-    .mapValues((outTrans, from) =>
-      __.chain(outTrans)
-        .toPairs()
-        .flatMap(_.spread((symbols, trans) =>
-          __.castArray(String(symbols).split(","))
-            .map((symbol) => ({
-              [symbol]: parser(from, symbol, trans)
-            }))
-        ))
-        .thru((all) =>
-          _.spread(_.merge)(all)
-        )
-        .value()
-    )
-    .value();
-}
-
 @Exclude()
 export class AutomatonSpec {
   @Expose({ name: "start states" })
@@ -279,7 +221,7 @@ export class AutomatonSpec {
   @Transform((val, obj, type) => {
     return parseTable(val, getParser(makeType(obj.type)));
   })
-  @Validate(AllStatesDeclared, {
+  @Validate(AllStatesInTransitionTableDeclared, {
     message: "All states must be declared"
   })
   table: FSATransitionTable | PDATransitionTable | TMTransitionTable;
@@ -287,92 +229,7 @@ export class AutomatonSpec {
   simulatable: boolean;
 
   checkSimulatable() {
-    switch (this.type) {
-      case 'fsa':
-        return this.simulatable = true;
-      case 'pda': {
-        if (this.startStates.length > 1) return false;
-
-        let rst =
-          __.chain(<PDATransitionTable>this.table)
-            .mapValues((stateObj/*, state*/) =>
-              __.chain(stateObj)
-                .values()
-                .flatten()
-                .thru((transs) =>
-                  __.chain(_.range(transs.length))
-                    .map(i =>
-                      __.chain(_.range(i + 1, transs.length))
-                        .map(j => {
-                          let trans1 = transs[i],
-                            trans2 = transs[j];
-
-                          // guaranteed not to be distinguishable by from-state
-                          let distinguishedByRead =
-                              (   (trans1.read !== trans2.read)
-                                && (trans1.read !== this.epsilon && trans2.read !== this.epsilon)
-                              ),
-                            distinguishedByPop = !isPrefix(trans1.pop, trans2.pop);
-
-                          if ((_.isEqual(trans1, trans2))
-                            || distinguishedByPop
-                            || distinguishedByRead) return null;
-                          else return [trans1, trans2];
-                        })
-                        .filter(item => _.isArray(item))
-                        .map(item => item as PDATransition[])
-                        .value()
-                    )
-                    .flatten()
-                    .value()
-                )
-                .value()
-            )
-            .pickBy(item => item.length)
-            .value();
-
-        let label = (trans: PDATransition) =>
-          trans.from + '->' + trans.to + ': ' + trans.read + ', [' + trans.pop + '] ↦ [' + trans.push + ']';
-        let pair2str = (pair) => label(pair[0]) + (pair.length > 1 ? " AND " + label(pair[1]) : "");
-
-        console.log("Non deterministic transition pairs in PDA:");
-        _.forOwn(rst, (pairs/*, state*/) => {
-          _(pairs)
-            .forEach(pair => console.log(pair2str(pair)));
-        });
-
-        return this.simulatable = _.isEmpty(rst);
-      }
-      case 'tm': {
-        if (this.startStates.length > 1) return false;
-
-        let rst =
-          __.chain(<TMTransitionTable>this.table)
-            .mapValues((stateObj/*, state*/) =>
-              __.chain(stateObj)
-                .mapValues((transs, symbol) =>
-                  transs.length > 1 ? transs : null
-                )
-                .values()
-                .filter(_.isArray)
-                .value()
-            )
-            .pickBy(item => item.length)
-            .value();
-
-        let label = (trans: TMTransition) =>
-          trans.from + '->' + trans.to + ': ' + trans.read + '↦' + trans.write + ',' + trans.move;
-        let group2str = (groups) => _.map(groups, (trans) => label(trans)).join(' ; ');
-
-        console.log("Non deterministic transition pairs in TM:");
-        _.forOwn(rst, (groups/*, state*/) => {
-          _(groups)
-            .forEach(group => console.log(group2str(group)));
-        });
-
-        return this.simulatable = _.isEmpty(rst);
-      }
-    }
+    return this.simulatable = checkSimulatable(this.type, this.startStates, this.epsilon, this.table);
   }
 }
 
