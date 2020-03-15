@@ -44,3 +44,5 @@ export type TransitionTable<T extends Transition> = {[state: string] : {[symbol:
 export type FSATransitionTable = TransitionTable<FSATransition>;
 export type PDATransitionTable = TransitionTable<PDATransition>;
 export type TMTransitionTable = TransitionTable<TMTransition>;
+
+export type SynonymsTable<T extends Transition> = {[id: string]: T}

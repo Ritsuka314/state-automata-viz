@@ -26,6 +26,7 @@ import {
   FSATransitionSchema, PDATransitionSchema, TMTransitionSchema,
   Transition, FSATransition, PDATransition, TMTransition,
   PDATransitionTable, TMTransitionTable, TransitionTable,
+  SynonymsTable
 } from './TransitionSpec'
 
 import TMSpecError from '../src/TMSpecError';
@@ -218,8 +219,18 @@ let schemaFields = {
         return schema.strip(true);
     }),
 
-  // TODO
-  // synonyms
+  synonyms: yup
+    .object()
+    .default({})
+    .when('type', (type, schema) =>
+      schema.transform((table) => {
+        let parse = getParser(type);
+        return __
+          .chain(table)
+          .map((value) => parse(null, null, value));
+      })
+    ),
+
 
   table: yup
     .object()
