@@ -622,6 +622,21 @@ describe('parser - class transformer', function() {
         });
       });
 
+      describe('number of tapes', function() {
+        it('number', function () {
+          let str = stripIndent`
+          type: tm
+          blank: ' '
+          nTape: 2
+          `;
+
+          let spec = parseSpec(str);
+          console.log(spec);
+          // TODO
+        });
+
+      });
+
       describe('transition table', function() {
         it('regular', function () {
           let str = stripIndent`
