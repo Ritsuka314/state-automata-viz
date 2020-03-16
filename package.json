@@ -7,7 +7,7 @@
   "author": "Andy Li <andy.srs.li@gmail.com>",
   "repository": "aepsilon/turing-machine-viz",
   "scripts": {
-    "clean": "trash build/ || rm -r build/",
+    "clean": "rimraf  build",
     "depgraph": "mkdir -p build/ && (cd src/ && madge . --dot) > build/depgraph.gv",
     "depgraph-noext": "mkdir -p build/ && (cd src/ && madge . --dot -x \"`node -e \"console.log(Object.keys(require('../webpack.config').externals).map(s => '^'+s+'$').join('|'))\"`\") > build/depgraph-noext.gv",
     "lint": "eslint --cache webpack.config.js src/",
