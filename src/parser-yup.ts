@@ -218,9 +218,6 @@ let schemaFields = {
         return schema.strip(true);
     }),
 
-  // TODO
-  // synonyms
-
   table: yup
     .object()
     .default({})
@@ -249,6 +246,13 @@ export type AutomatonSpec = yup.InferType<typeof schema>;
 export function parseSpec(str: string): AutomatonSpec {
   let obj = jsyaml.safeLoad(str);
   if (obj == null) obj = {};
+  console.log(util.inspect(obj, false, null, true));
+
+  // expand synonyms
+  let synonyms = _.get(obj, 'synonyms', {});
+  obj = _.cloneDeepWith(obj, value => {
+    return _.get(synonyms, value, undefined);
+  });
   console.log(util.inspect(obj, false, null, true));
 
   let transObj = schema.validateSync(obj);
