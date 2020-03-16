@@ -22,8 +22,12 @@ describe('parser - yup', function() {
           type:
           blank: " "
           `;
-        let spec = parseSpec(str);
-        assert.strictEqual(spec.type, 'tm');
+
+        assert.throws(() => parseSpec(str), _.conforms({
+            name: _.partial(_.isEqual, 'ValidationError'),
+            message: _.partial(_.isEqual, 'Automaton must be of type ["fsa","pda","tm"]')
+          })
+        );
       });
 
       it('undefined', function () {

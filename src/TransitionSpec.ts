@@ -8,7 +8,12 @@ export let StringArraySchema = (transformer) =>
     // array.ensure is broken
     .transform(transformer);
 
-export let automatonTypes = ['fsa', 'pda', 'tm'];
+export enum AutomatonType {
+  fsa = 'fsa',
+  pda = 'pda',
+  tm = 'tm',
+}
+export type AutomatonTypeStrings = keyof typeof AutomatonType;
 
 export let FSATransitionSchema = yup.object({
   from: yup.string(),

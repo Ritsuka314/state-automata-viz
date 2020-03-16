@@ -22,7 +22,7 @@ import * as util from "util";
 
 import {
   StringArraySchema,
-  automatonTypes,
+  AutomatonType, AutomatonTypeStrings,
   FSATransitionSchema, PDATransitionSchema, TMTransitionSchema,
   Transition, FSATransition, PDATransition, TMTransition,
   PDATransitionTable, TMTransitionTable, TransitionTable,
@@ -152,10 +152,10 @@ const TMTransitionParser: TransitionParser<TMTransition> =
       })
   };
 
-function getParser(type: string): TransitionParser<Transition> {
-  if (type === 'fsa')
+function getParser(type: AutomatonType): TransitionParser<Transition> {
+  if (type === AutomatonType.fsa)
     return FSATransitionParser;
-  else if (type === 'pda')
+  else if (type === AutomatonType.pda)
     return PDATransitionParser;
   else
     return TMTransitionParser;
@@ -177,19 +177,20 @@ let schemaFields = {
   input: StringArraySchema(splitToStringArray),
 
   type: yup
-    .string()
-    .defaultNull('tm')
+    .mixed<keyof typeof AutomatonType>()
+    .nullable().default('tm')
     .oneOf(
-      automatonTypes,
-      'Automaton must be of type ' + JSON.stringify(automatonTypes)
+      Object.values(AutomatonType),
+      'Automaton must be of type ' + JSON.stringify(Object.values(AutomatonType))
     ),
 
   epsilon: yup
     .string()
     .when('type', (type, schema) => {
-      if (type === 'fsa' || type === 'pda')
+      if (type === AutomatonType.fsa || type === AutomatonType.pda)
         return schema.defaultNull('');
       else
+        // TM does not have epsilon transitions
         return schema.strip(true);
     })
     .test(
@@ -203,7 +204,8 @@ let schemaFields = {
   blank: yup
     .string()
     .when('type', (type, schema) => {
-      if (type === 'tm')
+      if (type === AutomatonType.tm)
+        // only TM has blank symbol
         return schema.required();
       else
         return schema.strip(true);
