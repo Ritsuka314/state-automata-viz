@@ -31,16 +31,8 @@ function animatedTransition(graph, animationCallback) {
   return function (state, symbol) {
     var tuple = graph.getInstructionAndEdge(state, symbol);
     if (tuple == null) { return null; }
-    //else if (tuple instanceof Array) {
-    //  _.each(tuple, (t) => animationCallback(t.edge));
-    //  return _.map(tuple, (t) => t.instruction);
-    //}
     else {
-      if (tuple.edge instanceof Array)
-        _.each((edge) => animationCallback(edge))
-              (tuple.edge);
-      else
-        animationCallback(tuple.edge);
+      animationCallback(tuple.edge);
       return tuple.transition;
     }
   };
@@ -108,7 +100,7 @@ function TMViz(div, spec, posTable) {
   }
   else {
     // no need to to these if not simulatable
-    
+
     this.edgeAnimation = pulseEdge;
     this.stepInterval = 100;
 
