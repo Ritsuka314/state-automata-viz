@@ -238,7 +238,9 @@ let schemaFields = {
 
 let schema = yup.object(schemaFields)
   .from('["start states"]', 'startStates')
+  .from('["start state"]', 'startStates')
   .from('["accept states"]', 'acceptStates')
+  .from('["accept state"]', 'acceptStates')
 ;
 
 export type AutomatonSpec = yup.InferType<typeof schema>;

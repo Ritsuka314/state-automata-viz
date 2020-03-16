@@ -220,7 +220,7 @@ TMViz.prototype.reset = function () {
   this.isRunning = false;
   this.isHalted = false;
   this.error = null;
-  this.machine.state = this.__spec.startStates;
+  this.machine.states = this.__spec.startStates;
   this.machine.tape.domNode.remove();
   if (this.machine instanceof FSA)
     this.machine.tape = addBoundedTape(this.__parentDiv, this.__spec);
