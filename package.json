@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "common-tags": "^1.8.0",
-    "js-yaml": "^3.14.2",
+    "js-yaml": "^4.2.0",
     "lodash": "^4.17.23",
     "reflect-metadata": "^0.1.13",
     "yup": "^1.7.1"
