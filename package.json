@@ -42,7 +42,7 @@
     "typescript": "^3.5.3",
     "webpack": "^4.38.0",
     "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^5.2.4",
+    "webpack-dev-server": "^5.2.6",
     "webpack-node-externals": "^1.7.2"
   }
 }
